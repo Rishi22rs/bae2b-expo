@@ -1,48 +1,38 @@
-import {
-  Image,
-  ScrollView,
-  Text,
-  Pressable,
-  View,
-  ImageBackground,
-} from 'react-native';
-import {CardComponent} from '../../components/CardComponent';
-import {Header} from '../../components/Header';
-import {createStyleSheet} from './style';
-import {useCallback, useEffect, useState} from 'react';
-import {requestLocationPermission} from '../../utils/requestLocationPermission';
-import * as Location from 'expo-location';
-import {ButtonComponent} from '../../components/ButtonComponent';
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
+import * as Location from "expo-location";
+import { useCallback, useEffect, useState } from "react";
+import { Image, Pressable, ScrollView, Text, View } from "react-native";
+import Animated, {
+  FadeIn,
+  FadeOut,
+  SlideInDown,
+  SlideOutDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
+import DotsIcon from "react-native-vector-icons/Entypo";
+import Icon from "react-native-vector-icons/Ionicons";
 import {
   useAddLikeDislike,
   useGetNearbyUsers,
   useUpdateUserLocation,
-} from '../../api/match';
-import {BigText} from './components/BigText';
-import {SmallText} from './components/SmallText';
-import {LineItems} from './components/LineItems';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import {navigationConstants} from '../../constants/app-navigation';
-import Icon from 'react-native-vector-icons/Ionicons';
-import DotsIcon from 'react-native-vector-icons/Entypo';
-import Animated, {
-  FadeIn,
-  FadeOut,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  BounceOutDown,
-  BounceInDown,
-  SlideInDown,
-  SlideOutDown,
-} from 'react-native-reanimated';
-import {LinearGradient} from 'expo-linear-gradient';
-import {hexToRgbA} from '../../utils/hexToRgba';
-import {screenHeight, screenWidth} from '../../utils/dimensions';
-import {ModalComponent} from '../../components/ModalComponent';
-import Loader from '../../components/Loader';
+} from "../../api/match";
+import { ButtonComponent } from "../../components/ButtonComponent";
+import { Header } from "../../components/Header";
+import Loader from "../../components/Loader";
+import { ModalComponent } from "../../components/ModalComponent";
+import { navigationConstants } from "../../constants/app-navigation";
+import { screenHeight, screenWidth } from "../../utils/dimensions";
+import { hexToRgbA } from "../../utils/hexToRgba";
+import { requestLocationPermission } from "../../utils/requestLocationPermission";
+import { BigText } from "./components/BigText";
+import { LineItems } from "./components/LineItems";
+import { SmallText } from "./components/SmallText";
+import { createStyleSheet } from "./style";
 
-export const Home = ({route}) => {
+export const Home = ({ route }) => {
   const styles = createStyleSheet();
   const [locationGranted, setLocationGranted] = useState(false);
   const [nearbyUsers, setNearbyUsers] = useState([]);
@@ -64,7 +54,7 @@ export const Home = ({route}) => {
         latitude: coords?.latitude,
         longitude: coords?.longitude,
         radius: 1000000,
-      }).then(res => {
+      }).then((res) => {
         setNearbyUsers(res?.data);
         setShowLoader(false);
       });
@@ -107,7 +97,7 @@ export const Home = ({route}) => {
           setCoords(currentCoords);
           useUpdateUserLocation(currentCoords);
         } catch (error) {
-          console.error('Location error:', error);
+          console.error("Location error:", error);
         }
       };
 
@@ -120,9 +110,9 @@ export const Home = ({route}) => {
   );
 
   const handleLikeDislike = (payload?: object) => {
-    console.log('payload', payload);
+    console.log("payload", payload);
     useAddLikeDislike(payload)
-      .then(res => {
+      .then((res) => {
         if (res?.data?.matched) {
           navigation.replace(navigationConstants.MATCH_ROUTE, {
             screen: navigationConstants.ITS_A_MATCH,
@@ -130,20 +120,20 @@ export const Home = ({route}) => {
           });
         } else {
           setTimeout(() => {
-            setCurrentUserIndex(prev => prev + 1);
+            setCurrentUserIndex((prev) => prev + 1);
           }, 200);
         }
       })
-      .catch(error => console.log('error', error.response));
+      .catch((error) => console.log("error", error.response));
   };
 
   const getCurrentSection = (user: unknown) => {
     switch (user?.type) {
-      case 'BIG_TEXT':
+      case "BIG_TEXT":
         return <BigText title={user?.title} content={user?.content} />;
-      case 'SMALL_TEXT':
+      case "SMALL_TEXT":
         return <SmallText title={user?.title} content={user?.content} />;
-      case 'SMALL_TEXT_LIST':
+      case "SMALL_TEXT_LIST":
         return <LineItems title={user?.title} content={user?.content} />;
     }
   };
@@ -180,12 +170,13 @@ export const Home = ({route}) => {
     return (
       <CardComponent
         style={!isDetailShown ? styles.container : {}}
-        contentContainerStyle={styles.container}>
+        contentContainerStyle={styles.container}
+      >
         <Animated.View style={styles.imageContainer}>
           <Pressable>
             <Animated.Image
               source={{
-                uri: 'https://rukminim2.flixcart.com/image/850/1000/xif0q/poster/s/d/v/medium-anime-girls-fantasy-anime-girls-hd-matte-finish-poster-original-imagh8k9taqepyzs.jpeg?q=90&crop=false',
+                uri: "https://rukminim2.flixcart.com/image/850/1000/xif0q/poster/s/d/v/medium-anime-girls-fantasy-anime-girls-hd-matte-finish-poster-original-imagh8k9taqepyzs.jpeg?q=90&crop=false",
               }}
               style={[styles.profileImage, animatedImageStyle]}
             />
@@ -193,14 +184,15 @@ export const Home = ({route}) => {
               <View>
                 <LinearGradient
                   colors={[
-                    hexToRgbA('#000000', 90),
-                    hexToRgbA('#000000', 80),
-                    hexToRgbA('#000000', 50),
-                    'transparent',
+                    hexToRgbA("#000000", 90),
+                    hexToRgbA("#000000", 80),
+                    hexToRgbA("#000000", 50),
+                    "transparent",
                   ]}
-                  start={{x: 0, y: 1}}
-                  end={{x: 0, y: 0}}
-                  style={styles.userDetailImageTop}>
+                  start={{ x: 0, y: 1 }}
+                  end={{ x: 0, y: 0 }}
+                  style={styles.userDetailImageTop}
+                >
                   <Text style={styles.userDetailImageTopText}>
                     {
                       nearbyUsers?.[currentUserIndex]?.segregatedList?.[0]
@@ -215,7 +207,8 @@ export const Home = ({route}) => {
                         );
                         setIsDetailShown(true);
                       }
-                    }}>
+                    }}
+                  >
                     <DotsIcon
                       name="dots-three-vertical"
                       size={24}
@@ -236,19 +229,21 @@ export const Home = ({route}) => {
         <View style={styles.actionButtons}>
           <Pressable
             style={styles.circleButtonBig}
-            onPress={() => handleLikeUnlikeView(-1)}>
+            onPress={() => handleLikeUnlikeView(-1)}
+          >
             <Icon name="close" size={24} color="#ff3b30" />
           </Pressable>
           <Pressable
             style={styles.circleButtonBig}
-            onPress={() => handleLikeUnlikeView(1)}>
+            onPress={() => handleLikeUnlikeView(1)}
+          >
             <Icon name="heart" size={28} color="#ff2d55" />
           </Pressable>
         </View>
 
         {/* Profile Info */}
         <View style={styles.profileInfo}>
-          {nearbyUsers?.[currentUserIndex]?.segregatedList?.map(user => {
+          {nearbyUsers?.[currentUserIndex]?.segregatedList?.map((user) => {
             return (
               <View>
                 {getCurrentSection(user)}
@@ -265,7 +260,7 @@ export const Home = ({route}) => {
     return (
       <View>
         <Image
-          source={require('../../assets/noUsers.png')}
+          source={require("../../assets/noUsers.png")}
           style={{
             height: 500,
             width: screenWidth,
@@ -274,11 +269,12 @@ export const Home = ({route}) => {
         <Text
           style={{
             paddingHorizontal: 30,
-            fontWeight: '600',
+            fontWeight: "600",
             fontSize: 30,
-            color: '#f96163',
-            textAlign: 'center',
-          }}>
+            color: "#f96163",
+            textAlign: "center",
+          }}
+        >
           You're ahead of the crowd! We'll let you know when someone new pops
           up.
         </Text>
@@ -287,7 +283,7 @@ export const Home = ({route}) => {
   };
 
   return (
-    <View style={{backgroundColor: 'white', flex: 1}}>
+    <View style={{ backgroundColor: "white", flex: 1 }}>
       <Loader visible={showLoader} />
       {/* {like or unlike view} */}
       {showLikeUnlikeView !== 0 && (
@@ -312,7 +308,8 @@ export const Home = ({route}) => {
         <Animated.View
           key={`card-${currentUserIndex}`}
           entering={SlideInDown.duration(1000)}
-          exiting={SlideOutDown.duration(500)}>
+          exiting={SlideOutDown.duration(500)}
+        >
           {nearbyUsers?.length !== currentUserIndex
             ? renderCard()
             : renderNoUserNearby()}
