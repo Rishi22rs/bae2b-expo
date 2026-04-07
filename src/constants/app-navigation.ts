@@ -21,4 +21,6 @@ export const navigationConstants = {
   VIEW_ONLY_PROFILE: 'view-only-profile',
   LOGIN_PAGE: 'login-page',
   OTP_PAGE: 'otp-page',
+  LIKES: 'likes',
+  LIKES_PROFILE: 'likes-profile',
 };

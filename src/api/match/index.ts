@@ -1,4 +1,3 @@
-import {baseURL} from '../../constants/api';
 import apiClient from '..';
 
 export const useGetNearbyUsers = (payload: object) => {
@@ -16,6 +15,21 @@ export const useMatchedUserData = () => {
 
 export const useMatchedUserIds = () => {
   return apiClient.get(`/matched-user-ids`);
+};
+
+export const useGetLikesReceived = async () => {
+  try {
+    return await apiClient.get(`/get-likes-received`);
+  } catch (error: unknown) {
+    const statusCode = (error as {response?: {status?: number}})?.response
+      ?.status;
+
+    if (statusCode === 404 || statusCode === 405) {
+      return apiClient.get(`/getLikesReceived`);
+    }
+
+    throw error;
+  }
 };
 
 export const useUpdateUserLocation = (payload: object) => {

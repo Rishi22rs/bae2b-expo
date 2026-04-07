@@ -1,5 +1,6 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { navigationConstants } from "../../constants/app-navigation";
+import { LikesRoute } from "./likes-route";
 import { Profile } from "../../screens/profile/index";
 import { HomeRoute } from "./home-route";
 
@@ -9,6 +10,7 @@ export const BottomTabs = () => {
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen name={navigationConstants.HOME} component={HomeRoute} />
+      <Tab.Screen name={navigationConstants.LIKES} component={LikesRoute} />
       <Tab.Screen name={navigationConstants.PROFILE} component={Profile} />
     </Tab.Navigator>
   );

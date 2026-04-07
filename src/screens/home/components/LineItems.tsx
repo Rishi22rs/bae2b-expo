@@ -1,18 +1,37 @@
 import {Text, View} from 'react-native';
-import {CardComponent} from '../../../components/CardComponent';
 import {createStyleSheet} from '../style';
 
 export const LineItems = ({title = '', content = []}) => {
   const styles = createStyleSheet();
+
+  const resolveItemLabel = (item: unknown) => {
+    if (typeof item === 'string') {
+      return item;
+    }
+
+    if (item && typeof item === 'object' && 'value' in item) {
+      return (item as {value?: string})?.value || '';
+    }
+
+    return '';
+  };
+
   return (
     <View>
       <Text style={styles.sectionTitle}>{title}</Text>
       <View style={styles.interestsContainer}>
-        {content?.map((item, key) => (
-          <View key={key} style={styles.interestPill}>
-            <Text style={styles.interestText}>{item?.value}</Text>
-          </View>
-        ))}
+        {content?.map((item, key) => {
+          const label = resolveItemLabel(item);
+          if (!label) {
+            return null;
+          }
+
+          return (
+            <View key={key} style={styles.interestPill}>
+              <Text style={styles.interestText}>{label}</Text>
+            </View>
+          );
+        })}
       </View>
     </View>
   );

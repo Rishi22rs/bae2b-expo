@@ -2,7 +2,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
 import { useCallback, useEffect, useState } from "react";
-import { Image, Pressable, ScrollView, Text, View } from "react-native";
+import { Image, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import Animated, {
   FadeIn,
   FadeOut,
@@ -42,6 +42,10 @@ export const Home = ({ route }) => {
   const [showLikeUnlikeView, setShowLikeUnlikeView] = useState(0);
   const navigation = useNavigation();
   const [showLoader, setShowLoader] = useState(true);
+  const isInsecureWebContext =
+    Platform.OS === "web" &&
+    typeof window !== "undefined" &&
+    !window.isSecureContext;
 
   const cardHeight = {
     detailsNotShownHeight: screenHeight - 170,
@@ -49,13 +53,24 @@ export const Home = ({ route }) => {
   };
 
   const getNearyByUsers = () => {
-    if (!!coords)
-      useGetNearbyUsers({
-        latitude: coords?.latitude,
-        longitude: coords?.longitude,
-        radius: 1000000,
-      }).then((res) => {
-        setNearbyUsers(res?.data);
+    if (!coords) {
+      return;
+    }
+
+    setShowLoader(true);
+    useGetNearbyUsers({
+      latitude: coords?.latitude,
+      longitude: coords?.longitude,
+      radius: 1000000,
+    })
+      .then((res) => {
+        setNearbyUsers(res?.data || []);
+      })
+      .catch((error) => {
+        console.error("Nearby users fetch error:", error);
+        setNearbyUsers([]);
+      })
+      .finally(() => {
         setShowLoader(false);
       });
   };
@@ -65,22 +80,50 @@ export const Home = ({ route }) => {
   }, [coords]);
 
   const askLocationPermission = async () => {
+    setShowLoader(true);
     const granted = await requestLocationPermission();
-    if (granted) {
-      setLocationGranted(true);
-    } else {
-      setLocationGranted(false);
+    setLocationGranted(granted);
+    if (!granted) {
+      setShowLoader(false);
     }
   };
 
   useEffect(() => {
-    askLocationPermission();
+    const initializePermission = async () => {
+      try {
+        const existingPermission = await Location.getForegroundPermissionsAsync();
+        if (existingPermission.status === "granted") {
+          setLocationGranted(true);
+          return;
+        }
+
+        if (Platform.OS !== "web") {
+          await askLocationPermission();
+          return;
+        }
+
+        setLocationGranted(false);
+        setShowLoader(false);
+      } catch (error) {
+        console.error("Permission check error:", error);
+        setLocationGranted(false);
+        setShowLoader(false);
+      }
+    };
+
+    initializePermission();
   }, []);
 
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
       const updateLocation = async () => {
+        if (!locationGranted) {
+          setShowLoader(false);
+          return;
+        }
+
+        setShowLoader(true);
         try {
           const position = await Location.getCurrentPositionAsync({
             accuracy: Location.Accuracy.Highest,
@@ -95,9 +138,12 @@ export const Home = ({ route }) => {
           };
 
           setCoords(currentCoords);
-          useUpdateUserLocation(currentCoords);
+          useUpdateUserLocation(currentCoords).catch((error) =>
+            console.error("Location update error:", error),
+          );
         } catch (error) {
           console.error("Location error:", error);
+          setShowLoader(false);
         }
       };
 
@@ -106,7 +152,7 @@ export const Home = ({ route }) => {
       return () => {
         isActive = false;
       };
-    }, []),
+    }, [locationGranted]),
   );
 
   const handleLikeDislike = (payload?: object) => {
@@ -319,6 +365,12 @@ export const Home = ({ route }) => {
           <Text style={styles.nameText}>
             We need your location to serve users near you.
           </Text>
+          {isInsecureWebContext && (
+            <Text style={[styles.nameText, { fontSize: 14, marginTop: 8 }]}>
+              On mobile web, location permission works only on HTTPS (or localhost).
+              Open this site over HTTPS, then tap Allow permission.
+            </Text>
+          )}
           <ButtonComponent
             buttonText="Allow permission"
             onPress={askLocationPermission}
