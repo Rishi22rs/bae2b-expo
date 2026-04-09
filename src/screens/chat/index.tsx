@@ -1,18 +1,21 @@
-import React, {useState, useRef, useEffect} from 'react';
+import React, { useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
-  TextInput,
   FlatList,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native';
-import {Header} from '../../components/Header';
-import {createStyleSheet} from './style';
-import socket from '../../utils/socket';
-import {useMatchedUserIds} from '../../api/match';
-import {useAddChatsBetweenUsers, useGetChatsBetweenUsers} from '../../api/chat';
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import {
+  useAddChatsBetweenUsers,
+  useGetChatsBetweenUsers,
+} from "../../api/chat";
+import { useMatchedUserIds } from "../../api/match";
+import { Header } from "../../components/Header";
+import socket, { connectSocketWithAuth } from "../../utils/socket";
+import { createStyleSheet } from "./style";
 
 // const mockMessages = [
 //   {
@@ -26,41 +29,73 @@ import {useAddChatsBetweenUsers, useGetChatsBetweenUsers} from '../../api/chat';
 
 export const Chat = () => {
   const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [ids, setIds] = useState();
   const flatListRef = useRef<FlatList>(null);
   const styles = createStyleSheet();
 
   useEffect(() => {
-    setTimeout(() => {
-      flatListRef.current?.scrollToEnd({animated: false});
-    }, 100);
-    useMatchedUserIds().then(res => {
-      setIds(res?.data);
-      useGetChatsBetweenUsers({
-        otherUserId: res?.data?.other_user_id,
-      }).then(chats => {
-        setMessages(chats?.data);
-        socket.emit('joinRoom', {
-          userId: res?.data?.user_id,
-          otherUserId: res?.data?.other_user_id,
-        });
+    let isMounted = true;
+    let joinedRoomIds: { userId?: string; otherUserId?: string } | null = null;
 
-        socket.on('receiveMessage', msg => {
-          if (msg?.senderId === res?.data?.user_id) return;
-          setMessages(prev => [...prev, {...msg, sender: 'other'}]);
-          flatListRef.current?.scrollToEnd({animated: true});
-        });
+    const handleConnectError = (err: { message?: string }) => {
+      console.log(err?.message || "Socket connect error");
+    };
 
-        return () => {
-          socket.emit('leaveRoom', {
-            userId: res?.data?.user_id,
-            otherUserId: res?.data?.other_user_id,
-          });
-          socket.off('receiveMessage');
-        };
+    const handleReceiveMessage = (msg) => {
+      if (msg?.senderId === joinedRoomIds?.userId) return;
+      setMessages((prev) => [...prev, { ...msg, sender: "other" }]);
+      flatListRef.current?.scrollToEnd({ animated: true });
+    };
+
+    const initChat = async () => {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: false });
+      }, 100);
+
+      socket.on("connect_error", handleConnectError);
+      await connectSocketWithAuth();
+
+      const res = await useMatchedUserIds();
+      if (!isMounted) return;
+
+      const currentIds = res?.data;
+      setIds(currentIds);
+      joinedRoomIds = {
+        userId: currentIds?.user_id,
+        otherUserId: currentIds?.other_user_id,
+      };
+
+      const chats = await useGetChatsBetweenUsers({
+        otherUserId: currentIds?.other_user_id,
       });
+      if (!isMounted) return;
+
+      setMessages(chats?.data);
+
+      socket.emit("joinRoom", {
+        userId: currentIds?.user_id,
+        otherUserId: currentIds?.other_user_id,
+      });
+      socket.on("receiveMessage", handleReceiveMessage);
+    };
+
+    initChat().catch((error) => {
+      console.log("chat init error", error);
     });
+
+    return () => {
+      isMounted = false;
+      socket.off("connect_error", handleConnectError);
+      socket.off("receiveMessage", handleReceiveMessage);
+
+      if (joinedRoomIds?.userId && joinedRoomIds?.otherUserId) {
+        socket.emit("leaveRoom", {
+          userId: joinedRoomIds.userId,
+          otherUserId: joinedRoomIds.otherUserId,
+        });
+      }
+    };
   }, []);
 
   const sendMessage = () => {
@@ -70,10 +105,10 @@ export const Chat = () => {
       id: Date.now().toString(),
       text: input,
       time: new Date().toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
+        hour: "2-digit",
+        minute: "2-digit",
       }),
-      sender: 'me',
+      sender: "me",
       senderId: ids?.user_id,
       recieverId: ids?.other_user_id,
     };
@@ -82,29 +117,30 @@ export const Chat = () => {
       toId: ids?.other_user_id,
       message: input,
     }).then(() => {
-      socket.emit('sendMessage', newMessage);
-      setMessages(prev => {
+      socket.emit("sendMessage", newMessage);
+      setMessages((prev) => {
         const updated = [...prev, newMessage];
 
         setTimeout(() => {
-          flatListRef.current?.scrollToEnd({animated: true});
+          flatListRef.current?.scrollToEnd({ animated: true });
         }, 100);
 
         return updated;
       });
     });
 
-    setInput('');
+    setInput("");
   };
 
-  const renderItem = ({item}) => {
-    const isMe = item.sender === 'me';
+  const renderItem = ({ item }) => {
+    const isMe = item.sender === "me";
     return (
       <View
         style={[
           styles.messageBubble,
           isMe ? styles.myMessage : styles.theirMessage,
-        ]}>
+        ]}
+      >
         <Text style={styles.messageText}>{item.text}</Text>
         <Text style={styles.timeText}>{item.time}</Text>
       </View>
@@ -116,16 +152,17 @@ export const Chat = () => {
       <Header />
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={80}>
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={80}
+      >
         <FlatList
           ref={flatListRef}
           data={messages}
           renderItem={renderItem}
-          keyExtractor={item => item.id}
+          keyExtractor={(item) => item.id}
           contentContainerStyle={styles.messagesContainer}
           onContentSizeChange={() =>
-            flatListRef.current?.scrollToEnd({animated: true})
+            flatListRef.current?.scrollToEnd({ animated: true })
           }
         />
 

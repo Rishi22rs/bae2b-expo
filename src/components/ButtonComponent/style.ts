@@ -25,16 +25,25 @@ export const createStyleSheet = () => {
       padding: 14,
       borderRadius: 12,
     },
+    logoutButtonDisabled: {
+      opacity: 0.75,
+    },
     logoutContent: {
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
       gap: 8,
     },
+    logoutContentDisabled: {
+      opacity: 0.95,
+    },
     logoutText: {
       color: '#fff',
       fontSize: 16,
       fontWeight: '600',
+    },
+    logoutTextDisabled: {
+      color: '#f8fafc',
     },
   });
 };

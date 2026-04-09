@@ -1,12 +1,10 @@
 import axios, { AxiosResponse } from "axios";
-import { Platform } from "react-native";
-import { baseURL, webBaseURL } from "../constants/api";
+import { baseURL } from "../constants/api";
 import { getJwtToken } from "../utils/getJwtToken";
 import { logout } from "../utils/useLogout";
 
-console.log("Platform.OS", Platform.OS);
 const apiClient = axios.create({
-  baseURL: Platform.OS === "web" ? webBaseURL : baseURL,
+  baseURL,
   timeout: 100000,
 });
 
