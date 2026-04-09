@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
   title: {
     textAlign: 'center',
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#000',
   },
   profileSection: {
@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
   name: {
     marginTop: 10,
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '500',
     color: '#000',
   },
   email: {
@@ -422,6 +422,6 @@ const styles = StyleSheet.create({
   saveText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
   },
 });

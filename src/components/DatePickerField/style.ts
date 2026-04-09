@@ -9,7 +9,7 @@ export const createStyleSheet = () =>
     label: {
       fontSize: 12,
       color: defaultTheme.mutedText,
-      fontWeight: '700',
+      fontWeight: '500',
       textTransform: 'uppercase',
       letterSpacing: 0.4,
     },
@@ -18,7 +18,7 @@ export const createStyleSheet = () =>
     },
     requiredMark: {
       color: '#ef4444',
-      fontWeight: '700',
+      fontWeight: '500',
     },
     field: {
       position: 'relative',
@@ -44,13 +44,13 @@ export const createStyleSheet = () =>
     value: {
       fontSize: 15,
       color: defaultTheme.darkText,
-      fontWeight: '600',
+      fontWeight: '500',
       flex: 1,
     },
     errorText: {
       color: '#b91c1c',
       fontSize: 12,
-      fontWeight: '600',
+      fontWeight: '500',
       lineHeight: 16,
     },
   });

@@ -10,10 +10,11 @@ import {createStyleSheet} from './style';
 import {LinearGradient} from 'expo-linear-gradient';
 import React from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
+import {defaultTheme} from '../../config/theme';
 
 interface ButtonComponentProps extends PressableProps {
   viewStyle?: StyleProp<ViewStyle>;
-  textStyle?: TextStyle;
+  textStyle?: StyleProp<TextStyle>;
   children?: React.ReactNode;
   buttonText: string;
   disabled?: boolean;
@@ -29,7 +30,7 @@ export const ButtonComponent = (props: ButtonComponentProps) => {
     style: pressableStyle,
     buttonText = '',
     disabled = false,
-    icon = <Icon name="log-out-outline" size={20} color="#fff" />,
+    icon = <Icon name="log-out-outline" size={20} color="#1f1518" />,
     showIcon = false,
     ...pressableProps
   } = props;
@@ -39,8 +40,8 @@ export const ButtonComponent = (props: ButtonComponentProps) => {
     <LinearGradient
       colors={
         disabled
-          ? ['#d1d5db', '#cbd5e1']
-          : ['#f96163', '#f74a6e']
+          ? ['#f3dce3', '#f3dce3']
+          : [defaultTheme.pinkPrimary, defaultTheme.pinkPrimary]
       }
       start={{x: 0, y: 0}}
       end={{x: 1, y: 1}}
@@ -48,7 +49,19 @@ export const ButtonComponent = (props: ButtonComponentProps) => {
       <Pressable
         {...pressableProps}
         disabled={disabled}
-        style={[style.logoutContent, pressableStyle, disabled && style.logoutContentDisabled]}>
+        style={({pressed}) => {
+          const incomingStyle =
+            typeof pressableStyle === 'function'
+              ? pressableStyle({pressed})
+              : pressableStyle;
+
+          return [
+            style.logoutContent,
+            incomingStyle,
+            disabled && style.logoutContentDisabled,
+            pressed && !disabled && style.logoutContentPressed,
+          ];
+        }}>
         {showIcon && icon}
         <Text
           style={[

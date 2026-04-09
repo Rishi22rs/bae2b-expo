@@ -43,7 +43,7 @@ export const createStyleSheet = () => {
       color: '#9f1239',
       fontSize: 12,
       flex: 1,
-      fontWeight: '600',
+      fontWeight: '500',
     },
     retryButton: {
       borderRadius: 999,
@@ -54,7 +54,7 @@ export const createStyleSheet = () => {
     retryButtonText: {
       color: '#ffffff',
       fontSize: 12,
-      fontWeight: '700',
+      fontWeight: '500',
     },
   });
 };

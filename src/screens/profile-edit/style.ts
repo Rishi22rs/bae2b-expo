@@ -27,7 +27,7 @@ export const createStyleSheet = () => {
     labelStyle: {
       alignSelf: 'flex-start',
       fontSize: 14,
-      fontWeight: '600',
+      fontWeight: '500',
       color: hexToRgbA('#000000', 80),
       marginBottom: 8,
     },

@@ -24,11 +24,6 @@ export const createStyleSheet = () => {
       borderRadius: 0,
       overflow: 'hidden',
       backgroundColor: '#f3d8e1',
-      shadowColor: '#0f172a',
-      shadowOffset: {width: 0, height: 0},
-      shadowOpacity: 0,
-      shadowRadius: 0,
-      elevation: 0,
     },
     image: {
       width: '100%',
@@ -58,7 +53,7 @@ export const createStyleSheet = () => {
     likedBadgeText: {
       color: defaultTheme.pinkText,
       fontSize: 11,
-      fontWeight: '700',
+      fontWeight: '500',
       letterSpacing: 0.5,
       textTransform: 'uppercase',
     },
@@ -76,13 +71,10 @@ export const createStyleSheet = () => {
     },
     overlayTitle: {
       color: '#ffffff',
-      fontWeight: '700',
+      fontWeight: '500',
       fontSize: 33,
       lineHeight: 39,
       flex: 1,
-      textShadowColor: 'rgba(0,0,0,0.24)',
-      textShadowOffset: {width: 0, height: 2},
-      textShadowRadius: 8,
     },
     agePill: {
       backgroundColor: 'rgba(249, 97, 99, 0.28)',
@@ -98,7 +90,7 @@ export const createStyleSheet = () => {
     ageText: {
       color: '#ffffff',
       fontSize: 16,
-      fontWeight: '700',
+      fontWeight: '500',
     },
     locationPill: {
       marginTop: 9,
@@ -114,7 +106,7 @@ export const createStyleSheet = () => {
     locationText: {
       color: '#ffffff',
       fontSize: 13,
-      fontWeight: '600',
+      fontWeight: '500',
     },
     profileInfo: {
       marginTop: 0,
@@ -131,16 +123,11 @@ export const createStyleSheet = () => {
       borderBottomWidth: 1,
       borderLeftWidth: 0,
       borderRightWidth: 0,
-      shadowColor: '#0f172a',
-      shadowOffset: {width: 0, height: 0},
-      shadowOpacity: 0,
-      shadowRadius: 0,
-      elevation: 0,
     },
     sectionTitle: {
       color: defaultTheme.mutedText,
       fontSize: 12,
-      fontWeight: '700',
+      fontWeight: '500',
       letterSpacing: 0.5,
       textTransform: 'uppercase',
       marginBottom: 10,
@@ -170,7 +157,7 @@ export const createStyleSheet = () => {
     infoChipText: {
       color: defaultTheme.pinkText,
       fontSize: 13,
-      fontWeight: '700',
+      fontWeight: '500',
       letterSpacing: 0.2,
     },
     emptyCard: {
@@ -226,7 +213,7 @@ export const createStyleSheet = () => {
     dislikeButtonText: {
       color: defaultTheme.pinkText,
       fontSize: 15,
-      fontWeight: '700',
+      fontWeight: '500',
     },
     likeButton: {
       backgroundColor: defaultTheme.pinkPrimary,
@@ -237,7 +224,7 @@ export const createStyleSheet = () => {
     likeButtonText: {
       color: '#ffffff',
       fontSize: 15,
-      fontWeight: '700',
+      fontWeight: '500',
     },
   });
 };

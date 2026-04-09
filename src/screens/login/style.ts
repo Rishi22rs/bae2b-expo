@@ -1,152 +1,351 @@
-import {StyleSheet} from 'react-native';
-import {screenWidth} from '../../utils/dimensions';
+import {Platform, StyleSheet} from 'react-native';
 import {defaultTheme} from '../../config/theme';
-import {hexToRgbA} from '../../utils/hexToRgba';
 
 export const createStyleSheet = () => {
   return StyleSheet.create({
-    background: {
+    landingRoot: {
       flex: 1,
-      backgroundColor: 'white',
-      alignItems: 'center',
+      backgroundColor: '#101010',
+      position: 'relative',
+      overflow: 'hidden',
     },
-    loginContainer: {
+    landingCarousel: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0,
+    },
+    landingBgImage: {
+      width: '100%',
+      height: '100%',
+    },
+    landingOverlay: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0,
+    },
+    landingTopBar: {
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    landingProgressLine: {
+      height: 2,
+      width: 145,
+      borderRadius: 4,
+      backgroundColor: 'rgba(255,255,255,0.95)',
+    },
+    landingBrand: {
+      minWidth: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    landingBrandText: {
+      color: '#ffffff',
+      fontSize: 17,
+      fontWeight: '500',
+      letterSpacing: 1.4,
+    },
+    landingBottomArea: {
       position: 'absolute',
       left: 16,
       right: 16,
-      bottom: 16,
-      width: screenWidth - 32,
-      paddingVertical: 32,
-      paddingHorizontal: 32,
-      borderRadius: 16,
+      bottom: 22,
+      alignItems: 'center',
     },
-    buttonText: {
-      color: 'white',
-      fontWeight: '600',
-      fontSize: 14,
-      lineHeight: 20,
-    },
-    title: {
-      color: 'white',
-      fontWeight: '700',
-      fontSize: 40,
-      top: 180,
-    },
-    input: {
+    landingTitle: {
+      width: '100%',
+      color: '#ffffff',
+      fontSize: 60 / 1.5,
+      lineHeight: 67 / 1.5,
+      fontWeight: '500',
+      textAlign: 'left',
+      alignSelf: 'stretch',
       marginBottom: 16,
+      maxWidth: 360,
     },
-    loginTitle: {
-      color: '#303237',
-      fontWeight: '600',
-      fontSize: 24,
-      lineHeight: 20,
+    landingTitleCompact: {
+      fontSize: 52 / 1.5,
+      lineHeight: 58 / 1.5,
+    },
+    landingPrimaryButton: {
+      width: '100%',
+      minHeight: 54,
+      borderRadius: 28,
+      backgroundColor: '#ffffff',
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...(Platform.OS === 'web'
+        ? ({cursor: 'pointer'} as object)
+        : null),
+    },
+    landingPrimaryButtonText: {
+      color: '#111111',
+      fontSize: 30 / 1.5,
+      lineHeight: 30 / 1.5,
+      fontWeight: '500',
+    },
+    landingSecondaryAction: {
+      marginTop: 12,
+      paddingVertical: 6,
+      paddingHorizontal: 8,
+      ...(Platform.OS === 'web'
+        ? ({cursor: 'pointer'} as object)
+        : null),
+    },
+    landingSecondaryText: {
+      color: 'rgba(255,255,255,0.9)',
+      fontSize: 30 / 1.5,
+      lineHeight: 32 / 1.5,
+      fontWeight: '500',
+    },
+    landingLegalText: {
+      marginTop: 14,
+      color: 'rgba(255,255,255,0.88)',
+      fontSize: 11,
+      lineHeight: 17,
+      textAlign: 'center',
+      maxWidth: 340,
+    },
+    authRoot: {
+      flex: 1,
+      backgroundColor: '#ffffff',
+    },
+    authContainer: {
+      flex: 1,
+      backgroundColor: '#ffffff',
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      paddingBottom: 20,
+    },
+    authTitle: {
+      marginTop: 18,
+      marginBottom: 14,
+      color: '#161616',
+      fontSize: 59 / 1.5,
+      lineHeight: 66 / 1.5,
+      fontWeight: '500',
+    },
+    phoneRow: {
+      flexDirection: 'row',
+      alignItems: 'stretch',
+      gap: 8,
+      marginBottom: 10,
+    },
+    countryCard: {
+      width: 96,
+      borderRadius: 14,
+      backgroundColor: '#f3f3f7',
+      paddingHorizontal: 12,
+      paddingVertical: 12,
+      justifyContent: 'space-between',
+    },
+    authFieldLabel: {
+      color: '#222222',
+      fontSize: 12,
+      lineHeight: 14,
+      fontWeight: '500',
+      marginBottom: 7,
+    },
+    countryLabel: {
+      color: '#222222',
+      fontSize: 12,
+      lineHeight: 14,
+      fontWeight: '500',
       marginBottom: 8,
     },
-    loginSubTitle: {
-      color: hexToRgbA('#303237', 70),
-      fontWeight: '400',
-      fontSize: 14,
-      lineHeight: 18,
-      marginBottom: 16,
-    },
-    otpContainer: {
-      marginVertical: 30,
-    },
-    statusRow: {
+    countryValueRow: {
       flexDirection: 'row',
-      justifyContent: 'space-between',
       alignItems: 'center',
-      marginTop: -12,
-      marginBottom: 12,
-      gap: 12,
+      gap: 6,
     },
-    timerText: {
-      color: defaultTheme.mutedText,
-      fontWeight: '600',
-      fontSize: 13,
-      lineHeight: 18,
+    countryFlag: {
+      fontSize: 22 / 1.5,
+      lineHeight: 22 / 1.5,
+    },
+    phoneValueText: {
+      color: '#1f1f1f',
+      fontSize: 48 / 1.5,
+      lineHeight: 48 / 1.5,
+      fontWeight: '500',
+    },
+    phoneCard: {
       flex: 1,
+      borderRadius: 14,
+      backgroundColor: '#f3f3f7',
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      justifyContent: 'flex-start',
     },
-    attemptsText: {
-      color: defaultTheme.pinkText,
-      fontWeight: '700',
+    phoneLabel: {
+      color: '#222222',
       fontSize: 12,
-      lineHeight: 16,
-      textAlign: 'right',
+      lineHeight: 14,
+      fontWeight: '500',
+      marginBottom: 7,
     },
-    resendRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: 12,
+    phoneInputWrap: {
+      minHeight: 34,
+      justifyContent: 'center',
+      position: 'relative',
+    },
+    phoneInput: {
+      color: '#1f1f1f',
+      fontSize: 48 / 1.5,
+      lineHeight: 48 / 1.5,
+      fontWeight: '500',
+      height: 48 / 1.5,
+      paddingVertical: 0,
+      paddingHorizontal: 0,
+      margin: 0,
+      textAlignVertical: 'center',
+      includeFontPadding: false,
+      ...(Platform.OS === 'web'
+        ? ({
+            outlineStyle: 'none',
+            outlineWidth: 0,
+            outlineColor: 'transparent',
+            boxShadow: 'none',
+            appearance: 'none',
+            WebkitAppearance: 'none',
+          } as object)
+        : null),
+    },
+    phonePlaceholderText: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      color: '#b9b9b9',
+      fontSize: 48 / 1.5,
+      lineHeight: 48 / 1.5,
+      fontWeight: '500',
+      includeFontPadding: false,
+    },
+    authSubtitleLine: {
+      marginTop: -6,
+      marginBottom: 16,
+      color: '#1f1f1f',
+      fontSize: 15 / 1.5,
+      lineHeight: 21 / 1.5,
+      fontWeight: '500',
+    },
+    authSubtitleText: {
+      color: '#1f1f1f',
+      fontSize: 15 / 1.5,
+      lineHeight: 21 / 1.5,
+      fontWeight: '500',
+    },
+    authSubtitleStrong: {
+      color: '#1a1a1a',
+      fontSize: 16 / 1.5,
+      lineHeight: 21 / 1.5,
+      fontWeight: '500',
+    },
+    authSubtitleEdit: {
+      color: '#222222',
+      fontSize: 15 / 1.5,
+      lineHeight: 21 / 1.5,
+      fontWeight: '500',
+      textDecorationLine: 'none',
+    },
+    otpWrap: {
+      width: 272,
+      alignSelf: 'flex-start',
+      justifyContent: 'flex-start',
+      marginBottom: 18,
       gap: 8,
     },
-    loginSubTitleCompact: {
-      color: hexToRgbA('#303237', 70),
-      fontWeight: '400',
-      fontSize: 14,
-      lineHeight: 18,
-      marginBottom: 0,
-      flex: 1,
+    otpPinContainer: {
+      width: 58,
+      height: 66,
+      borderRadius: 12,
+      borderWidth: 0,
+      backgroundColor: '#f3f3f7',
+    },
+    otpPinContainerFocused: {
+      backgroundColor: '#ececf2',
+    },
+    otpPinContainerFilled: {
+      backgroundColor: '#ececf2',
+    },
+    otpPinText: {
+      color: '#101010',
+      fontSize: 27,
+      lineHeight: 29,
+      fontWeight: '500',
+    },
+    otpPlaceholderText: {
+      color: '#9d9da5',
+      fontSize: 27,
+      lineHeight: 29,
+      fontWeight: '500',
     },
     resendButton: {
-      paddingVertical: 4,
-      paddingHorizontal: 2,
+      alignSelf: 'flex-start',
+      paddingVertical: 2,
+      paddingHorizontal: 0,
+      marginBottom: 8,
+      ...(Platform.OS === 'web'
+        ? ({cursor: 'pointer'} as object)
+        : null),
     },
     resendText: {
-      color: defaultTheme.pinkPrimary,
-      fontWeight: '700',
-      fontSize: 14,
-      lineHeight: 18,
+      color: '#7c7c83',
+      fontSize: 31 / 1.5,
+      lineHeight: 31 / 1.5,
+      textDecorationLine: 'underline',
+      fontWeight: '500',
     },
     resendTextDisabled: {
-      color: hexToRgbA(defaultTheme.black, 45),
+      color: '#a5a5ac',
     },
-    infoMessage: {
-      color: '#0f766e',
-      fontWeight: '500',
-      fontSize: 13,
-      lineHeight: 18,
-      marginBottom: 8,
-    },
-    errorText: {
+    authErrorText: {
+      marginTop: 2,
+      marginBottom: 6,
       color: '#b91c1c',
+      fontSize: 12,
+      lineHeight: 16,
       fontWeight: '500',
-      fontSize: 13,
-      lineHeight: 18,
-      marginBottom: 8,
     },
-    titleBackContainer: {
-      flexDirection: 'row',
+    authInfoText: {
+      marginTop: 2,
+      marginBottom: 6,
+      color: defaultTheme.mutedText,
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '500',
+    },
+    authSpacer: {
+      flex: 1,
+    },
+    authPrimaryButton: {
+      width: '100%',
+      minHeight: 50,
+      borderRadius: 26,
+      backgroundColor: '#1d1d1d',
       alignItems: 'center',
-      gap: 16,
-      marginBottom: 16,
-      marginLeft: -4,
-    },
-    backBtn: {
+      justifyContent: 'center',
       marginBottom: 8,
+      ...(Platform.OS === 'web'
+        ? ({cursor: 'pointer'} as object)
+        : null),
     },
-    carouselTitle: {
-      fontSize: 32,
-      textAlign: 'center',
-      color: defaultTheme.black,
-      fontWeight: '600',
-      marginBottom: 16,
+    authPrimaryButtonDisabled: {
+      backgroundColor: '#dedede',
     },
-    carouselSubTitle: {
-      fontSize: 16,
-      textAlign: 'center',
-      color: hexToRgbA(defaultTheme.black, 60),
-      fontWeight: '400',
+    authPrimaryButtonText: {
+      color: '#ffffff',
+      fontSize: 17,
+      lineHeight: 20,
+      fontWeight: '500',
     },
-    textContainer: {
-      paddingHorizontal: 64,
-      marginTop: 32,
-    },
-    loginOtpContainer: {
-      paddingHorizontal: 16,
-      paddingTop: 32,
-      backgroundColor: 'white',
+    authPrimaryButtonTextDisabled: {
+      color: '#9a9a9f',
     },
   });
 };

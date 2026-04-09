@@ -1,5 +1,6 @@
 import {StyleSheet} from 'react-native';
 import {defaultTheme} from '../../config/theme';
+import {hexToRgbA} from '../../utils/hexToRgba';
 
 export const createStyleSheet = () => {
   return StyleSheet.create({
@@ -12,38 +13,46 @@ export const createStyleSheet = () => {
     },
     navigate: {
       fontSize: 16,
-      fontWeight: 700,
+      fontWeight: 500,
       color: 'white',
     },
     text: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: 'white',
+      fontSize: 15,
+      fontWeight: '500',
+      color: '#1f1518',
     },
     logoutButton: {
-      marginTop: 20,
-      padding: 14,
-      borderRadius: 12,
+      marginTop: 16,
+      minHeight: 52,
+      borderRadius: 16,
+      paddingHorizontal: 14,
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: hexToRgbA(defaultTheme.pinkText, 0.2),
     },
     logoutButtonDisabled: {
-      opacity: 0.75,
+      opacity: 0.9,
     },
     logoutContent: {
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
       gap: 8,
+      minHeight: 22,
     },
     logoutContentDisabled: {
-      opacity: 0.95,
+      opacity: 0.82,
+    },
+    logoutContentPressed: {
+      opacity: 0.84,
     },
     logoutText: {
-      color: '#fff',
+      color: '#1f1518',
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: '500',
     },
     logoutTextDisabled: {
-      color: '#f8fafc',
+      color: '#6b6470',
     },
   });
 };

@@ -4,10 +4,12 @@ import React, {useState} from 'react';
 import {ActivityIndicator, Image, Pressable, ScrollView, Text, View} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useAddLikeDislike} from '../../api/match';
+import {unmatch, useAddLikeDislike} from '../../api/match';
 import {Header} from '../../components/Header';
+import {navigationConstants} from '../../constants/app-navigation';
 import {defaultTheme} from '../../config/theme';
 import {screenHeight} from '../../utils/dimensions';
+import {goBackWithWebFallback} from '../../utils/navigation-back';
 import {createStyleSheet} from './style';
 
 interface ProfileSection {
@@ -34,6 +36,8 @@ interface LikesProfileScreenProps {
   route?: {
     params?: {
       user?: LikesProfileUser;
+      context?: 'likes' | 'match';
+      badgeText?: string;
     };
   };
 }
@@ -84,6 +88,10 @@ export const LikesProfile = ({route}: LikesProfileScreenProps) => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const user = route?.params?.user;
+  const contextMode = route?.params?.context || 'likes';
+  const badgeText =
+    route?.params?.badgeText || (contextMode === 'match' ? "It's a Match" : 'Liked You');
+  const showBack = contextMode !== 'match';
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedAction, setSelectedAction] = useState<'like' | 'dislike' | null>(
     null,
@@ -132,9 +140,11 @@ export const LikesProfile = ({route}: LikesProfileScreenProps) => {
   });
 
   const heroHeight = Math.max(330, Math.min(screenHeight * 0.5, 520));
+  const actionsDisabled =
+    isSubmitting || (contextMode !== 'match' && !targetUserId);
 
   const handleLikeDislike = async (action: 'like' | 'dislike') => {
-    if (!targetUserId || isSubmitting) {
+    if (actionsDisabled) {
       return;
     }
 
@@ -142,11 +152,33 @@ export const LikesProfile = ({route}: LikesProfileScreenProps) => {
     setSelectedAction(action);
 
     try {
+      if (contextMode === 'match') {
+        if (action === 'like') {
+          (navigation as any).navigate(navigationConstants.MATCH_ROUTE, {
+            screen: navigationConstants.CHAT,
+            params: {},
+          });
+        } else {
+          await unmatch();
+          (navigation as any).navigate(navigationConstants.BOTTOM_TABS, {
+            screen: navigationConstants.HOME_ROUTE,
+            params: {},
+          });
+        }
+        return;
+      }
+
       await useAddLikeDislike({
         other_user_id: targetUserId,
         is_like: action === 'like' ? 1 : 0,
       });
-      navigation.goBack();
+      goBackWithWebFallback(navigation as any, {
+        screen: navigationConstants.BOTTOM_TABS,
+        params: {
+          screen: navigationConstants.LIKES,
+          params: {},
+        },
+      });
     } catch (error) {
       console.error('like/dislike from profile failed:', error);
       setSelectedAction(null);
@@ -190,10 +222,18 @@ export const LikesProfile = ({route}: LikesProfileScreenProps) => {
   return (
     <View style={styles.container}>
       <Header
-        prefixTitle="Liked You"
+        prefixTitle={contextMode === 'match' ? 'Match' : 'Liked You'}
         title="Profile"
-        showBack
-        onBackPress={() => navigation.goBack()}
+        showBack={showBack}
+        onBackPress={() =>
+          goBackWithWebFallback(navigation as any, {
+            screen: navigationConstants.BOTTOM_TABS,
+            params: {
+              screen: navigationConstants.LIKES,
+              params: {},
+            },
+          })
+        }
       />
 
       <ScrollView
@@ -220,7 +260,7 @@ export const LikesProfile = ({route}: LikesProfileScreenProps) => {
             />
             <View style={styles.heroTopRow}>
               <View style={styles.likedBadge}>
-                <Text style={styles.likedBadgeText}>Liked You</Text>
+                <Text style={styles.likedBadgeText}>{badgeText}</Text>
               </View>
             </View>
 
@@ -271,10 +311,10 @@ export const LikesProfile = ({route}: LikesProfileScreenProps) => {
               styles.actionButton,
               styles.dislikeButton,
               selectedAction === 'dislike' ? styles.dislikeButtonActive : null,
-              isSubmitting || !targetUserId ? styles.actionButtonDisabled : null,
+              actionsDisabled ? styles.actionButtonDisabled : null,
             ]}
             onPress={() => handleLikeDislike('dislike')}
-            disabled={isSubmitting || !targetUserId}>
+            disabled={actionsDisabled}>
             <Ionicons name="close" size={20} color={defaultTheme.pinkText} />
             <Text style={styles.dislikeButtonText}>Dislike</Text>
           </Pressable>
@@ -284,10 +324,10 @@ export const LikesProfile = ({route}: LikesProfileScreenProps) => {
               styles.actionButton,
               styles.likeButton,
               selectedAction === 'like' ? styles.likeButtonActive : null,
-              isSubmitting || !targetUserId ? styles.actionButtonDisabled : null,
+              actionsDisabled ? styles.actionButtonDisabled : null,
             ]}
             onPress={() => handleLikeDislike('like')}
-            disabled={isSubmitting || !targetUserId}>
+            disabled={actionsDisabled}>
             {isSubmitting ? (
               <ActivityIndicator color="#ffffff" size="small" />
             ) : (

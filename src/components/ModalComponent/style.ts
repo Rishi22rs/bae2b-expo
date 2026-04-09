@@ -16,7 +16,7 @@ export const createStyleSheet = () => {
     },
     title: {
       fontSize: 34,
-      fontWeight: '600',
+      fontWeight: '500',
       color: defaultTheme.brown,
     },
   });

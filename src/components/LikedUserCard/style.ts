@@ -4,15 +4,10 @@ export const createStyleSheet = () => {
   return StyleSheet.create({
     container: {
       borderRadius: 20,
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 4},
-      shadowOpacity: 0.1,
-      shadowRadius: 14,
-      elevation: 5,
       ...(Platform.OS === 'web'
         ? ({
             transitionDuration: '160ms',
-            transitionProperty: 'transform, box-shadow',
+            transitionProperty: 'transform',
             transitionTimingFunction: 'ease',
           } as object)
         : null),
@@ -59,13 +54,13 @@ export const createStyleSheet = () => {
     },
     name: {
       fontSize: 17,
-      fontWeight: '700',
+      fontWeight: '500',
       color: '#ffffff',
       flex: 1,
     },
     age: {
       fontSize: 14,
-      fontWeight: '700',
+      fontWeight: '500',
       color: 'rgba(255,255,255,0.92)',
     },
     footerRow: {
@@ -85,7 +80,7 @@ export const createStyleSheet = () => {
     },
     statusText: {
       fontSize: 11,
-      fontWeight: '700',
+      fontWeight: '500',
       color: '#ffffff',
       letterSpacing: 0.3,
     },
@@ -100,7 +95,7 @@ export const createStyleSheet = () => {
     },
     badgeText: {
       color: '#111827',
-      fontWeight: '700',
+      fontWeight: '500',
       fontSize: 10,
       letterSpacing: 0.3,
       textTransform: 'uppercase',
@@ -114,7 +109,7 @@ export const createStyleSheet = () => {
     locationText: {
       color: '#ffffff',
       fontSize: 12,
-      fontWeight: '600',
+      fontWeight: '500',
       flex: 1,
     },
   });

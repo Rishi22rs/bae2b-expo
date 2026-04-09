@@ -315,7 +315,7 @@ export const Home = ({ route }) => {
         <Text
           style={{
             paddingHorizontal: 30,
-            fontWeight: "600",
+            fontWeight: "500",
             fontSize: 30,
             color: "#f96163",
             textAlign: "center",

@@ -10,7 +10,7 @@ export const createStyleSheet = () => {
     label: {
       color: hexToRgbA(defaultTheme.black, 80),
       fontSize: 13,
-      fontWeight: '600',
+      fontWeight: '500',
       marginBottom: 8,
     },
     labelError: {
@@ -28,34 +28,25 @@ export const createStyleSheet = () => {
       borderColor: hexToRgbA(defaultTheme.black, 14),
       backgroundColor: '#fff',
       paddingHorizontal: 14,
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 1},
-      shadowOpacity: 0.04,
-      shadowRadius: 2,
-      elevation: 1,
       ...(Platform.OS === 'web'
         ? ({
-            transitionProperty: 'border-color, box-shadow',
+            transitionProperty: 'border-color',
             transitionDuration: '160ms',
             transitionTimingFunction: 'ease',
           } as object)
         : null),
     },
     inputContainerFocused: {
-      borderColor: defaultTheme.orange,
       ...(Platform.OS === 'web'
         ? ({
-            boxShadow: `0 0 0 3px ${hexToRgbA(defaultTheme.orange, 18)}`,
+            borderColor: hexToRgbA(defaultTheme.black, 14),
           } as object)
-        : null),
+        : {
+            borderColor: defaultTheme.orange,
+          }),
     },
     inputContainerError: {
       borderColor: '#ef4444',
-      ...(Platform.OS === 'web'
-        ? ({
-            boxShadow: '0 0 0 3px rgba(239,68,68,0.14)',
-          } as object)
-        : null),
     },
     iconStyle: {
       color: hexToRgbA(defaultTheme.black, 35),
@@ -66,6 +57,16 @@ export const createStyleSheet = () => {
       color: defaultTheme.brown,
       flex: 1,
       paddingVertical: 14,
+      ...(Platform.OS === 'web'
+        ? ({
+            outlineStyle: 'none',
+            outlineWidth: 0,
+            outlineColor: 'transparent',
+            boxShadow: 'none',
+            appearance: 'none',
+            WebkitAppearance: 'none',
+          } as object)
+        : null),
     },
     textInputMultiline: {
       minHeight: 108,

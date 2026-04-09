@@ -22,7 +22,7 @@ export const createStyleSheet = () =>
     stepText: {
       fontSize: 13,
       color: defaultTheme.mutedText,
-      fontWeight: '600',
+      fontWeight: '500',
       marginBottom: 8,
     },
     progressTrack: {
@@ -46,11 +46,6 @@ export const createStyleSheet = () =>
       paddingTop: 18,
       paddingBottom: 20,
       minHeight: 330,
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 12},
-      shadowOpacity: 0.07,
-      shadowRadius: 20,
-      elevation: 4,
     },
     cardTopRow: {
       minHeight: 30,
@@ -70,14 +65,14 @@ export const createStyleSheet = () =>
     },
     inlineBackLabel: {
       fontSize: 14,
-      fontWeight: '700',
+      fontWeight: '500',
       color: hexToRgbA(defaultTheme.darkText, 0.7),
     },
     title: {
       fontSize: 28,
       lineHeight: 34,
       color: defaultTheme.darkText,
-      fontWeight: '700',
+      fontWeight: '500',
       marginBottom: 6,
     },
     subtitle: {
@@ -103,7 +98,7 @@ export const createStyleSheet = () =>
     datePickerLabel: {
       fontSize: 12,
       color: defaultTheme.mutedText,
-      fontWeight: '700',
+      fontWeight: '500',
       textTransform: 'uppercase',
       letterSpacing: 0.4,
     },
@@ -116,7 +111,7 @@ export const createStyleSheet = () =>
     datePickerValueText: {
       fontSize: 15,
       color: defaultTheme.darkText,
-      fontWeight: '600',
+      fontWeight: '500',
       flex: 1,
     },
     chipContainer: {
@@ -132,7 +127,7 @@ export const createStyleSheet = () =>
       marginTop: 8,
       fontSize: 12,
       lineHeight: 18,
-      fontWeight: '600',
+      fontWeight: '500',
       color: '#b91c1c',
       paddingHorizontal: 4,
     },
@@ -149,11 +144,11 @@ export const createStyleSheet = () =>
     dateDoneButtonText: {
       color: defaultTheme.pinkText,
       fontSize: 12,
-      fontWeight: '700',
+      fontWeight: '500',
     },
     labelStyle: {
       fontSize: 14,
-      fontWeight: '600',
+      fontWeight: '500',
       color: defaultTheme.darkText,
     },
     successOverlay: {
@@ -179,21 +174,16 @@ export const createStyleSheet = () =>
       paddingVertical: 24,
       alignItems: 'center',
       gap: 8,
-      shadowColor: '#000',
-      shadowOffset: {width: 0, height: 10},
-      shadowOpacity: 0.14,
-      shadowRadius: 18,
-      elevation: 8,
     },
     successTitle: {
       marginTop: 2,
       fontSize: 24,
-      fontWeight: '700',
+      fontWeight: '500',
       color: defaultTheme.darkText,
     },
     successSubtitle: {
       fontSize: 14,
       color: defaultTheme.mutedText,
-      fontWeight: '600',
+      fontWeight: '500',
     },
   });

@@ -1,25 +1,25 @@
-import {Pressable, View} from 'react-native';
-import {TextComponent} from '../../components/TextComponent';
-import {ButtonComponent} from '../../components/ButtonComponent';
-import {createStyleSheet} from './style';
-import Icon from 'react-native-vector-icons/Ionicons';
-import {useEffect, useMemo, useState} from 'react';
-import {Header} from '../../components/Header';
-import {useLogin, useOtp} from '../../api/auth';
-import {OtpInput} from 'react-native-otp-entry';
-import {useNavigation} from '@react-navigation/native';
-import {navigationConstants} from '../../constants/app-navigation';
+import {CommonActions, useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {StatusBar} from 'expo-status-bar';
+import {useEffect, useMemo, useState} from 'react';
+import {Platform, Pressable, SafeAreaView, Text, View} from 'react-native';
+import {OtpInput} from 'react-native-otp-entry';
+import Icon from 'react-native-vector-icons/Ionicons';
+import {useLogin, useOtp} from '../../api/auth';
+import {TextComponent} from '../../components/TextComponent';
+import {navigationConstants} from '../../constants/app-navigation';
 import {
-  formatSecondsAsClock,
   getApiErrorMessage,
   getMessageFromPayload,
   getOtpAttemptsLeft,
   getOtpExpirySeconds,
 } from '../../utils/otp';
+import {goBackWithWebFallback} from '../../utils/navigation-back';
+import {createStyleSheet} from './style';
 
 export const OtpScreen = ({route}: {route: any}) => {
   const style = createStyleSheet();
+  const navigation = useNavigation();
   const phoneNumber = route?.params?.phoneNumber || '';
   const otpMeta = route?.params?.otpMeta || route?.params || {};
 
@@ -30,15 +30,12 @@ export const OtpScreen = ({route}: {route: any}) => {
   const [infoMessage, setInfoMessage] = useState(
     route?.params?.requestMessage || getMessageFromPayload(otpMeta, ''),
   );
-
   const [attemptsLeft, setAttemptsLeft] = useState<number | undefined>(() =>
     getOtpAttemptsLeft(otpMeta),
   );
   const [secondsLeft, setSecondsLeft] = useState(() =>
-    getOtpExpirySeconds(otpMeta, 60),
+    getOtpExpirySeconds(otpMeta, 30),
   );
-
-  const navigation = useNavigation();
 
   useEffect(() => {
     if (secondsLeft <= 0) {
@@ -52,22 +49,41 @@ export const OtpScreen = ({route}: {route: any}) => {
     return () => clearInterval(timer);
   }, [secondsLeft]);
 
-  const timerLabel = useMemo(() => formatSecondsAsClock(secondsLeft), [secondsLeft]);
   const hasAttemptsRemaining = attemptsLeft === undefined || attemptsLeft > 0;
   const canResendOtp = secondsLeft <= 0 && !isResending && hasAttemptsRemaining;
   const canVerifyOtp = otp.length === 4 && !isVerifying && hasAttemptsRemaining;
-  const resendTextStyle = canResendOtp
-    ? style.resendText
-    : {...style.resendText, ...style.resendTextDisabled};
+  const resendLabel = canResendOtp
+    ? isResending
+      ? 'Resending code...'
+      : 'Resend code'
+    : `Resend code in ${secondsLeft}s`;
+  const maskedPhone = useMemo(
+    () => (phoneNumber ? `+91 - ${phoneNumber}` : '+91 - your number'),
+    [phoneNumber],
+  );
 
   const handleAuth = (res: any) => {
-    AsyncStorage.setItem('jwt-token', res?.data?.token).then(() =>
-      navigation.replace(navigationConstants.STEPPER_SCREEN),
-    );
+    AsyncStorage.setItem('jwt-token', res?.data?.token).then(() => {
+      const rootResetAction = CommonActions.reset({
+        index: 0,
+        routes: [{name: navigationConstants.STEPPER_SCREEN}],
+      });
+
+      (navigation as any).dispatch(rootResetAction);
+
+      // On web, ensure the OTP entry is replaced so browser-back won't return here.
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.history.replaceState(
+          window.history.state,
+          '',
+          `/${navigationConstants.STEPPER_SCREEN}`,
+        );
+      }
+    });
   };
 
   const handleResendOtp = async () => {
-    if (!phoneNumber || isResending) {
+    if (!phoneNumber || isResending || !canResendOtp) {
       return;
     }
 
@@ -77,25 +93,22 @@ export const OtpScreen = ({route}: {route: any}) => {
     try {
       const resendResponse = await useLogin({phone_number: phoneNumber});
       const responseData = resendResponse?.data || {};
-      const responseMessage = getMessageFromPayload(
-        responseData,
-        'OTP resent successfully.',
-      );
-
-      setInfoMessage(responseMessage);
+      setInfoMessage(getMessageFromPayload(responseData, 'OTP resent successfully.'));
       setOtp('');
-      setSecondsLeft(getOtpExpirySeconds(responseData, 60));
+      setSecondsLeft(getOtpExpirySeconds(responseData, 30));
       setAttemptsLeft(getOtpAttemptsLeft(responseData));
     } catch (error) {
-      setInfoMessage('');
       const errorData = (error as {response?: {data?: unknown}})?.response?.data;
+      setInfoMessage('');
       setErrorMessage(
         getApiErrorMessage(error, 'Unable to resend OTP. Please try again.'),
       );
+
       const nextAttempts = getOtpAttemptsLeft(errorData);
       if (nextAttempts !== undefined) {
         setAttemptsLeft(nextAttempts);
       }
+
       const nextExpiry = getOtpExpirySeconds(errorData, 0);
       if (nextExpiry > 0) {
         setSecondsLeft(nextExpiry);
@@ -126,16 +139,15 @@ export const OtpScreen = ({route}: {route: any}) => {
       );
       handleAuth(verifyResponse);
     } catch (error) {
-      setInfoMessage('');
       const errorData = (error as {response?: {data?: unknown}})?.response?.data;
-      setErrorMessage(
-        getApiErrorMessage(error, 'Invalid OTP. Please try again.'),
-      );
+      setInfoMessage('');
+      setErrorMessage(getApiErrorMessage(error, 'Invalid OTP. Please try again.'));
 
       const nextAttempts = getOtpAttemptsLeft(errorData);
       if (nextAttempts !== undefined) {
         setAttemptsLeft(nextAttempts);
       }
+
       const nextExpiry = getOtpExpirySeconds(errorData, 0);
       if (nextExpiry > 0) {
         setSecondsLeft(nextExpiry);
@@ -146,74 +158,88 @@ export const OtpScreen = ({route}: {route: any}) => {
   };
 
   return (
-    <View>
-      <Header />
-      <View style={style.loginOtpContainer}>
-        <View style={style.titleBackContainer}>
-          <Pressable onPress={navigation.goBack} style={style.backBtn}>
-            <Icon name="chevron-back" size={24} color="#000" />
-          </Pressable>
-          <TextComponent viewStyle={style.loginTitle}>
-            Enter your OTP
-          </TextComponent>
-        </View>
-        <TextComponent viewStyle={style.loginSubTitle}>
-          Please enter the OTP sent to {phoneNumber || 'your phone number'}.
-        </TextComponent>
+    <SafeAreaView style={style.authRoot}>
+      <StatusBar style="dark" backgroundColor="#ffffff" />
+      <View style={style.authContainer}>
+        <Icon name="phone-portrait-outline" size={26} color="#111111" />
+
+        <TextComponent viewStyle={style.authTitle}>Enter the code</TextComponent>
+
+        <Text style={style.authSubtitleLine}>
+          <Text style={style.authSubtitleText}>Code sent to </Text>
+          <Text style={style.authSubtitleStrong}>{maskedPhone}</Text>
+          <Text style={style.authSubtitleText}> · </Text>
+          <Text
+            style={style.authSubtitleEdit}
+            onPress={() =>
+              goBackWithWebFallback(navigation as any, {
+                screen: navigationConstants.LOGIN_PAGE,
+              })
+            }>
+            Edit
+          </Text>
+        </Text>
+
         <OtpInput
           numberOfDigits={4}
-          onTextChange={text => setOtp(text)}
+          onTextChange={setOtp}
+          placeholder="0"
           theme={{
-            containerStyle: style.otpContainer,
+            containerStyle: style.otpWrap,
+            pinCodeContainerStyle: style.otpPinContainer,
+            focusedPinCodeContainerStyle: style.otpPinContainerFocused,
+            filledPinCodeContainerStyle: style.otpPinContainerFilled,
+            pinCodeTextStyle: style.otpPinText,
+            placeholderTextStyle: style.otpPlaceholderText,
           }}
         />
-        <View style={style.statusRow}>
-          <TextComponent viewStyle={style.timerText}>
-            {secondsLeft > 0
-              ? `OTP expires in ${timerLabel}`
-              : 'OTP expired. You can resend now.'}
+
+        <Pressable
+          disabled={!canResendOtp}
+          onPress={handleResendOtp}
+          style={style.resendButton}>
+          <TextComponent
+            viewStyle={
+              canResendOtp
+                ? style.resendText
+                : {
+                    ...style.resendText,
+                    ...style.resendTextDisabled,
+                  }
+            }>
+            {resendLabel}
           </TextComponent>
-          {typeof attemptsLeft === 'number' ? (
-            <TextComponent viewStyle={style.attemptsText}>
-              Attempts left: {attemptsLeft}
-            </TextComponent>
-          ) : null}
-        </View>
-        <View style={style.resendRow}>
-          <TextComponent viewStyle={style.loginSubTitleCompact}>
-            Didn’t receive the code?
-          </TextComponent>
-          <Pressable
-            disabled={!canResendOtp}
-            onPress={handleResendOtp}
-            style={style.resendButton}>
-            <TextComponent viewStyle={resendTextStyle}>
-              {isResending
-                ? 'Resending...'
-                : canResendOtp
-                  ? 'Resend OTP'
-                  : `Resend in ${timerLabel}`}
-            </TextComponent>
-          </Pressable>
-        </View>
-        {!!infoMessage ? (
-          <TextComponent viewStyle={style.infoMessage}>{infoMessage}</TextComponent>
-        ) : null}
+        </Pressable>
+
         {!!errorMessage ? (
-          <TextComponent viewStyle={style.errorText}>{errorMessage}</TextComponent>
+          <TextComponent viewStyle={style.authErrorText}>{errorMessage}</TextComponent>
         ) : null}
-        {attemptsLeft === 0 && !errorMessage ? (
-          <TextComponent viewStyle={style.errorText}>
-            OTP attempts exhausted. Please request a new OTP.
-          </TextComponent>
+        {!!infoMessage ? (
+          <TextComponent viewStyle={style.authInfoText}>{infoMessage}</TextComponent>
         ) : null}
-        <ButtonComponent
-          buttonText={isVerifying ? 'Verifying...' : 'Verify OTP'}
-          textStyle={style.buttonText}
+
+        <View style={style.authSpacer} />
+
+        <Pressable
           disabled={!canVerifyOtp}
           onPress={handleOtpVerify}
-        />
+          style={[
+            style.authPrimaryButton,
+            !canVerifyOtp ? style.authPrimaryButtonDisabled : null,
+          ]}>
+          <TextComponent
+            viewStyle={
+              canVerifyOtp
+                ? style.authPrimaryButtonText
+                : {
+                    ...style.authPrimaryButtonText,
+                    ...style.authPrimaryButtonTextDisabled,
+                  }
+            }>
+            {isVerifying ? 'Verifying OTP...' : 'Verify OTP'}
+          </TextComponent>
+        </Pressable>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };

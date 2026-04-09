@@ -1,181 +1,133 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useNavigation} from '@react-navigation/native';
-import {useRef, useState} from 'react';
-import {Image, ImageBackground, Pressable, Text, View} from 'react-native';
-import {OtpInput} from 'react-native-otp-entry';
-import {useLogin, useOtp} from '../../api/auth';
-import {ButtonComponent} from '../../components/ButtonComponent';
-import {TextComponent} from '../../components/TextComponent';
-import {TextInputComponent} from '../../components/TextInputComponent';
-import {navigationConstants} from '../../constants/app-navigation';
-import {createStyleSheet} from './style';
-import Icon from 'react-native-vector-icons/Ionicons';
-import Carousel, {
-  ICarouselInstance,
-  Pagination,
-} from 'react-native-reanimated-carousel';
-import {useSharedValue} from 'react-native-reanimated';
-import {screenHeight, screenWidth} from '../../utils/dimensions';
-import {Header} from '../../components/Header';
+import { useNavigation } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
+import { StatusBar } from "expo-status-bar";
+import { useCallback, useMemo, useState } from "react";
+import {
+  Image,
+  LayoutChangeEvent,
+  Pressable,
+  View,
+  useWindowDimensions,
+} from "react-native";
+import Carousel from "react-native-reanimated-carousel";
+import { TextComponent } from "../../components/TextComponent";
+import { navigationConstants } from "../../constants/app-navigation";
+import { createStyleSheet } from "./style";
 
-const data = [
-  {
-    image: require('../../assets/car1.png'),
-    title: 'Modern dating is broken.',
-    subTitle: 'Too many matches. Not enough meaning.',
-  },
-  {
-    image: require('../../assets/car2.png'),
-    title: 'One match at a time.',
-    subTitle:
-      'You can’t like anyone else until you unmatch. Because trust starts on Day 1.',
-  },
-  {
-    image: require('../../assets/car3.png'),
-    title: 'This isn’t for players.',
-    subTitle: 'This is for people who want to build something real.',
-  },
+const LANDING_CAROUSEL_IMAGES = [
+  require("../../assets/car1.png"),
+  require("../../assets/car2.png"),
+  require("../../assets/car3.png"),
 ];
 
-export const Login = ({route}) => {
+const LANDING_TAGLINES = [
+  "1 real connection > 100 randoms.",
+  "Pick one. Build real.",
+  "One vibe. One person. No cap.",
+  "One person who truly gets you.",
+  "One meaningful match over many maybes.",
+];
+
+export const Login = () => {
   const style = createStyleSheet();
-
-  const [phoneNumber, setPhoneNumber] = useState();
   const navigation = useNavigation();
-  const [currentStep, setCurrentStep] = useState(0);
-  const [otp, setOtp] = useState('');
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const [containerSize, setContainerSize] = useState({
+    width: windowWidth,
+    height: windowHeight,
+  });
+  const landingTagline = useMemo(
+    () => LANDING_TAGLINES[Math.floor(Math.random() * LANDING_TAGLINES.length)],
+    [],
+  );
+  const isLongTagline = landingTagline.length > 32;
+  const carouselWidth = containerSize.width || windowWidth;
+  const carouselHeight = containerSize.height || windowHeight;
 
-  const ref = useRef<ICarouselInstance>(null);
-  const progress = useSharedValue<number>(0);
+  const handleLayout = useCallback((event: LayoutChangeEvent) => {
+    const nextWidth = Math.round(event.nativeEvent.layout.width);
+    const nextHeight = Math.round(event.nativeEvent.layout.height);
 
-  const handleAuth = res => {
-    AsyncStorage.setItem('jwt-token', res?.data?.token).then(() =>
-      navigation.replace(navigationConstants.STEPPER_SCREEN),
+    if (nextWidth <= 0 || nextHeight <= 0) {
+      return;
+    }
+
+    setContainerSize((prev) =>
+      prev.width === nextWidth && prev.height === nextHeight
+        ? prev
+        : {
+            width: nextWidth,
+            height: nextHeight,
+          },
     );
+  }, []);
+
+  const handleGetStarted = () => {
+    (navigation as any).navigate(navigationConstants.LOGIN_PAGE);
   };
 
-  const handleSteps = (step: number) => {
-    if (step === 1) {
-      setCurrentStep(step);
-    }
-    if (step === 2) {
-      useLogin({phone_number: phoneNumber}).then(data => {
-        setCurrentStep(step);
-      });
-    }
-    if (step === 3) {
-      useOtp({phoneNumber, otp}).then(handleAuth);
-    }
+  const handleLogin = () => {
+    (navigation as any).navigate(navigationConstants.LOGIN_PAGE);
   };
 
   return (
-    <>
-      <Header prefixTitle="Yours" />
-      <View style={style.background}>
-        <Carousel
-          ref={ref}
-          width={screenWidth}
-          height={screenHeight}
-          data={data}
-          onProgressChange={progress}
-          autoPlay
-          renderItem={({item, index}) => (
-            <View>
-              <Image
-                source={item.image}
-                style={{height: screenHeight - 400, width: screenWidth}}
-                resizeMode="cover"
-              />
-              <View style={style.textContainer}>
-                <Text style={style.carouselTitle}>{item.title}</Text>
-                <Text style={style.carouselSubTitle}>{item.subTitle}</Text>
-              </View>
-            </View>
-          )}
-        />
-        <TextComponent viewStyle={style.title}>Best App</TextComponent>
-        <View style={style.loginContainer}>
-          {currentStep === 0 && (
-            <View>
-              <ButtonComponent
-                buttonText={'Login'}
-                textStyle={style.buttonText}
-                onPress={() =>
-                  navigation.navigate(navigationConstants.LOGIN_PAGE)
-                }
-              />
-            </View>
-          )}
-          {currentStep === 1 && (
-            <View>
-              <View style={style.titleBackContainer}>
-                <Pressable
-                  onPress={() => {
-                    setCurrentStep(prev => prev - 1);
-                  }}
-                  style={style.backBtn}>
-                  <Icon name="chevron-back" size={24} color="#000" />
-                </Pressable>
-                <TextComponent viewStyle={style.loginTitle}>
-                  Enter Phone No.
-                </TextComponent>
-              </View>
-              <TextComponent viewStyle={style.loginSubTitle}>
-                Please enter your active phone no.
-              </TextComponent>
-              <TextInputComponent
-                maxLength={10}
-                showIcon={false}
-                placeholderTextColor={'#B8B8B8'}
-                placeholder="Enter Phone Number"
-                onChangeText={number => setPhoneNumber(number)}
-                viewStyle={style.input}
-                keyboardType="phone-pad"
-              />
-              <ButtonComponent
-                buttonText={'Request OTP'}
-                textStyle={style.buttonText}
-                onPress={() => handleSteps(2)}
-              />
-            </View>
-          )}
-          {currentStep === 2 && (
-            <View>
-              <View style={style.titleBackContainer}>
-                <Pressable
-                  onPress={() => {
-                    setCurrentStep(prev => prev - 1);
-                  }}
-                  style={style.backBtn}>
-                  <Icon name="chevron-back" size={24} color="#000" />
-                </Pressable>
-                <TextComponent viewStyle={style.loginTitle}>
-                  Enter your OTP
-                </TextComponent>
-              </View>
-              <TextComponent viewStyle={style.loginSubTitle}>
-                Please enter the OTP sent to your phone no.
-              </TextComponent>
-              <OtpInput
-                numberOfDigits={4}
-                onTextChange={text => setOtp(text)}
-                theme={{
-                  containerStyle: style.otpContainer,
-                }}
-              />
-              <TextComponent viewStyle={style.loginSubTitle}>
-                Didn’t receive the code?{' '}
-                <TextComponent>Resend OTP</TextComponent>
-              </TextComponent>
-              <ButtonComponent
-                buttonText={'Request OTP'}
-                textStyle={style.buttonText}
-                onPress={() => handleSteps(3)}
-              />
-            </View>
-          )}
+    <View style={style.landingRoot} onLayout={handleLayout}>
+      <StatusBar style="light" backgroundColor="#111111" />
+      <Carousel
+        width={carouselWidth}
+        height={carouselHeight}
+        data={LANDING_CAROUSEL_IMAGES}
+        loop
+        autoPlay
+        autoPlayInterval={3200}
+        scrollAnimationDuration={780}
+        style={style.landingCarousel}
+        renderItem={({ item }) => (
+          <Image
+            source={item}
+            style={style.landingBgImage}
+            resizeMode="cover"
+          />
+        )}
+      />
+      <LinearGradient
+        colors={["rgba(0,0,0,0.16)", "rgba(0,0,0,0.82)"]}
+        start={{ x: 0.5, y: 0.08 }}
+        end={{ x: 0.5, y: 1 }}
+        style={style.landingOverlay}
+      />
+
+      <View style={style.landingTopBar}>
+        <View style={style.landingProgressLine} />
+        <View style={style.landingBrand}>
+          <TextComponent viewStyle={style.landingBrandText}>B2B</TextComponent>
         </View>
       </View>
-    </>
+
+      <View style={style.landingBottomArea}>
+        <TextComponent
+          viewStyle={[
+            style.landingTitle,
+            isLongTagline ? style.landingTitleCompact : null,
+          ]}
+        >
+          {landingTagline}
+        </TextComponent>
+
+        <Pressable
+          style={style.landingPrimaryButton}
+          onPress={handleGetStarted}
+        >
+          <TextComponent viewStyle={style.landingPrimaryButtonText}>
+            Get Started
+          </TextComponent>
+        </Pressable>
+
+        <TextComponent viewStyle={style.landingLegalText}>
+          By tapping "Sign in", you agree to our EULA, the Terms of{"\n"}Use and
+          the Acceptable Use Policy.
+        </TextComponent>
+      </View>
+    </View>
   );
 };

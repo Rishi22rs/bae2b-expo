@@ -82,7 +82,6 @@ export const TextInputComponent = ({
             style.textInput,
             useMultiline && style.textInputMultiline,
             inputStyle,
-            Platform.OS === 'web' ? ({outlineStyle: 'none'} as object) : null,
           ]}
           onFocus={event => {
             setIsFocused(true);

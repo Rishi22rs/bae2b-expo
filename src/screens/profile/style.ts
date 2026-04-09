@@ -10,7 +10,7 @@ export const createStyleSheet = () => {
       textAlign: 'center',
       marginTop: 16,
       fontSize: 18,
-      fontWeight: '600',
+      fontWeight: '500',
       color: '#000',
     },
     profileSection: {
@@ -36,7 +36,7 @@ export const createStyleSheet = () => {
     name: {
       marginTop: 10,
       fontSize: 18,
-      fontWeight: '700',
+      fontWeight: '500',
       color: '#000',
     },
     email: {
@@ -79,7 +79,7 @@ export const createStyleSheet = () => {
     logoutText: {
       color: '#fff',
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: '500',
     },
   });
 };

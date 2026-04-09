@@ -67,7 +67,7 @@ export const createStyleSheet = () => {
     },
     name: {
       fontSize: 24,
-      fontWeight: 'bold',
+      fontWeight: '500',
       color: defaultTheme.brown,
     },
     subtitle: {
@@ -80,7 +80,7 @@ export const createStyleSheet = () => {
       borderRadius: 12,
     },
     sectionTitle: {
-      fontWeight: 'bold',
+      fontWeight: '500',
       marginTop: 24,
       marginBottom: 8,
       fontSize: 16,
@@ -146,7 +146,7 @@ export const createStyleSheet = () => {
     },
     userDetailImageTopText: {
       color: defaultTheme.cream,
-      fontWeight: '700',
+      fontWeight: '500',
       fontSize: 30,
     },
     fullscreenOverlay: {

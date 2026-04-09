@@ -6,7 +6,7 @@ export const createStyleSheet=()=>{
     return StyleSheet.create({
       title: {
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: '500',
       },
       imageBackground:{
         height:180,

@@ -15,7 +15,7 @@ export const createStyleSheet = () => {
     defaultLabel: {
       paddingHorizontal: 10,
       paddingVertical: 8,
-      fontFamily: '400',
+      fontWeight: '400',
       fontSize: 10,
       color: hexToRgbA('#000000', 80),
       lineHeight: 12,
