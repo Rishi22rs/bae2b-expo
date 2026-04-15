@@ -1,14 +1,14 @@
 import {
   Pressable,
-  PressableProps,
   StyleProp,
   Text,
   TextStyle,
+  ViewStyle,
 } from 'react-native';
 import {createStyleSheet} from './style';
 
 interface ChipProps {
-  chipStyle?: StyleProp<PressableProps>;
+  chipStyle?: StyleProp<ViewStyle>;
   selected?: boolean;
   onSelect?: (label: string) => void;
   labelStyle?: StyleProp<TextStyle>;

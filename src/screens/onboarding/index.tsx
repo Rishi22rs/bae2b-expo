@@ -1,84 +1,81 @@
-import DateTimePicker from '@react-native-community/datetimepicker';
-import React, {useState} from 'react';
-import {Platform, Pressable, Text, View} from 'react-native';
+import { useNavigation } from "@react-navigation/native";
+import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
+import React, { useState } from "react";
+import { Pressable, Text, View } from "react-native";
 import Animated, {
   FadeIn,
   FadeOut,
-  FadeInDown,
-  FadeOutDown,
   SlideInLeft,
   SlideInRight,
   SlideOutLeft,
   SlideOutRight,
   ZoomIn,
-} from 'react-native-reanimated';
-import {ButtonComponent} from '../../components/ButtonComponent';
-import {Chip} from '../../components/ChipComponent';
-import {DatePickerField} from '../../components/DatePickerField/index';
-import {Header} from '../../components/Header';
-import {TextInputComponent} from '../../components/TextInputComponent';
-import {defaultTheme} from '../../config/theme';
-import {hexToRgbA} from '../../utils/hexToRgba';
-import {createStyleSheet} from './style';
-import {useAddUserInfo} from '../../api/onboarding';
-import {useNavigation} from '@react-navigation/native';
-import {navigationConstants} from '../../constants/app-navigation';
-import Icon from 'react-native-vector-icons/Ionicons';
-import {onboardingConfig} from './config';
+} from "react-native-reanimated";
+import Icon from "react-native-vector-icons/Ionicons";
+import { uploadImageToCloudinary, useAddUserInfo } from "../../api/onboarding";
+import { ButtonComponent } from "../../components/ButtonComponent";
+import { Chip } from "../../components/ChipComponent";
+import { DatePickerField } from "../../components/DatePickerField";
+import { Header } from "../../components/Header";
+import { KeyboardScreenLayout } from "../../components/KeyboardScreenLayout";
+import { TextInputComponent } from "../../components/TextInputComponent";
+import { defaultTheme } from "../../config/theme";
+import { navigationConstants } from "../../constants/app-navigation";
+import { hexToRgbA } from "../../utils/hexToRgba";
+import { onboardingConfig } from "./config";
+import { createStyleSheet } from "./style";
 
 const totalSteps = onboardingConfig.steps.length;
-const WebDateInput = 'input' as any;
 
 export const Onboarding = () => {
   const styles = createStyleSheet();
   const [step, setStep] = useState(0);
-  const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
+  const [direction, setDirection] = useState<"forward" | "backward">("forward");
   const [submitState, setSubmitState] = useState<
-    'idle' | 'loading' | 'success' | 'error'
-  >('idle');
-  const [submitError, setSubmitError] = useState('');
-  const [showDatePicker, setShowDatePicker] = useState(false);
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+  const [submitError, setSubmitError] = useState("");
   const [touched, setTouched] = useState({
     name: false,
     birthday: false,
+    photos: false,
   });
   const [formData, setFormData] = useState({
-    name: '',
+    name: "",
     birthday: new Date(),
-    gender: '',
-    orientation: '',
+    gender: "",
+    orientation: "",
     passions: [] as string[],
+    photos: ["", "", "", ""] as string[],
   });
   const nextStep = () => {
-    setDirection('forward');
-    setStep(prev => prev + 1);
+    setDirection("forward");
+    setStep((prev) => prev + 1);
   };
   const prevStep = () => {
-    setDirection('backward');
-    setStep(prev => (prev > 0 ? prev - 1 : prev));
+    setDirection("backward");
+    setStep((prev) => (prev > 0 ? prev - 1 : prev));
   };
 
-  const navigation = useNavigation();
-  const isSubmitting = submitState === 'loading' || submitState === 'success';
+  const navigation = useNavigation<any>();
+  const isSubmitting = submitState === "loading" || submitState === "success";
   const progressPercent = ((step + 1) / totalSteps) * 100;
   const currentStepConfig = onboardingConfig.steps[step];
-  const today = new Date();
-  const webTodayDate = `${today.getFullYear()}-${String(
-    today.getMonth() + 1,
-  ).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-
   const isStepValid = () => {
     switch (currentStepConfig?.id) {
-      case 'name':
-        return getNameValidationError(formData.name) === '';
-      case 'birthday':
-        return getBirthdayValidationError(formData.birthday) === '';
-      case 'gender':
-        return formData.gender !== '';
-      case 'orientation':
-        return formData.orientation !== '';
-      case 'passions':
+      case "name":
+        return getNameValidationError(formData.name) === "";
+      case "birthday":
+        return getBirthdayValidationError(formData.birthday) === "";
+      case "gender":
+        return formData.gender !== "";
+      case "orientation":
+        return formData.orientation !== "";
+      case "passions":
         return formData.passions.length > 0;
+      case "photos":
+        return getPhotosValidationError(formData.photos) === "";
       default:
         return true;
     }
@@ -89,7 +86,7 @@ export const Onboarding = () => {
       return onboardingConfig.validation.nameRequired;
     }
 
-    return '';
+    return "";
   };
 
   const calculateAge = (birthDate: Date) => {
@@ -106,7 +103,10 @@ export const Onboarding = () => {
   };
 
   const getBirthdayValidationError = (birthdayValue: Date) => {
-    if (!(birthdayValue instanceof Date) || Number.isNaN(birthdayValue.getTime())) {
+    if (
+      !(birthdayValue instanceof Date) ||
+      Number.isNaN(birthdayValue.getTime())
+    ) {
       return onboardingConfig.validation.birthdayRequired;
     }
 
@@ -117,27 +117,93 @@ export const Onboarding = () => {
       );
     }
 
-    return '';
+    return "";
   };
 
-  const nameError = touched.name ? getNameValidationError(formData.name) : '';
+  const nameError = touched.name ? getNameValidationError(formData.name) : "";
   const birthdayError = touched.birthday
     ? getBirthdayValidationError(formData.birthday)
-    : '';
+    : "";
+  const getPhotosValidationError = (photosValue: string[]) => {
+    const currentStep = onboardingConfig.steps.find(
+      (configStep) => configStep.id === "photos",
+    );
+    const minimumPhotos =
+      currentStep?.id === "photos" ? currentStep.minPhotos : 1;
+    const validPhotosCount = photosValue.filter(Boolean).length;
+
+    if (validPhotosCount < minimumPhotos) {
+      return onboardingConfig.validation.photosRequired(minimumPhotos);
+    }
+
+    return "";
+  };
+  const photosError = touched.photos
+    ? getPhotosValidationError(formData.photos)
+    : "";
+
+  const pickPhoto = async (index: number) => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      setSubmitError("Please allow photo access to add your images.");
+      setSubmitState("error");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [4, 5],
+      quality: 0.85,
+      selectionLimit: 1,
+    });
+
+    if (result.canceled || !result.assets?.[0]?.uri) {
+      return;
+    }
+
+    const nextUri = result.assets[0].uri;
+    setFormData((prev) => {
+      const nextPhotos = [...prev.photos];
+      nextPhotos[index] = nextUri;
+      return { ...prev, photos: nextPhotos };
+    });
+    setTouched((prev) => ({ ...prev, photos: true }));
+    setSubmitError("");
+    if (submitState === "error") {
+      setSubmitState("idle");
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setFormData((prev) => {
+      const nextPhotos = [...prev.photos];
+      nextPhotos[index] = "";
+      return { ...prev, photos: nextPhotos };
+    });
+    setTouched((prev) => ({ ...prev, photos: true }));
+  };
 
   const handleSubmit = async () => {
     if (isSubmitting) {
       return;
     }
 
-    setSubmitError('');
-    setSubmitState('loading');
+    setSubmitError("");
+    setSubmitState("loading");
     try {
+      const selectedPhotos = formData.photos.filter(Boolean);
+      const uploadedPhotos = await Promise.all(
+        selectedPhotos.map((photoUri) => uploadImageToCloudinary(photoUri)),
+      );
       await useAddUserInfo({
         ...formData,
-        passions: formData.passions.join(','),
+        passions: formData.passions.join(","),
+        profileImage: uploadedPhotos[0] || "",
+        images: uploadedPhotos,
+        photos: uploadedPhotos,
       });
-      setSubmitState('success');
+      setSubmitState("success");
       setTimeout(() => {
         navigation.replace(navigationConstants.BOTTOM_TABS, {
           screen: navigationConstants.HOME,
@@ -145,29 +211,34 @@ export const Onboarding = () => {
         });
       }, onboardingConfig.success.navigateDelayMs);
     } catch (error) {
-      const responseMessage = (error as {response?: {data?: {message?: string}}})
-        ?.response?.data?.message;
+      const responseMessage = (
+        error as { response?: { data?: { message?: string } } }
+      )?.response?.data?.message;
       setSubmitError(
-        responseMessage || 'Could not complete onboarding. Please try again.',
+        responseMessage || "Could not complete onboarding. Please try again.",
       );
-      setSubmitState('error');
-      console.error('Onboarding submit failed:', error);
+      setSubmitState("error");
+      console.error("Onboarding submit failed:", error);
     }
   };
 
   const handleContinue = () => {
-    if (submitState === 'error') {
-      setSubmitState('idle');
-      setSubmitError('');
+    if (submitState === "error") {
+      setSubmitState("idle");
+      setSubmitError("");
     }
 
     if (!isStepValid()) {
-      if (currentStepConfig?.id === 'name') {
-        setTouched(prev => ({...prev, name: true}));
+      if (currentStepConfig?.id === "name") {
+        setTouched((prev) => ({ ...prev, name: true }));
       }
 
-      if (currentStepConfig?.id === 'birthday') {
-        setTouched(prev => ({...prev, birthday: true}));
+      if (currentStepConfig?.id === "birthday") {
+        setTouched((prev) => ({ ...prev, birthday: true }));
+      }
+
+      if (currentStepConfig?.id === "photos") {
+        setTouched((prev) => ({ ...prev, photos: true }));
       }
 
       return;
@@ -181,66 +252,13 @@ export const Onboarding = () => {
     handleSubmit();
   };
 
-  const handleDateChange = (
-    event: {type?: string},
-    date?: Date,
-  ) => {
-    if (event?.type === 'dismissed') {
-      setShowDatePicker(false);
-      return;
-    }
-
-    if (date) {
-      setFormData(prev => ({...prev, birthday: date}));
-      setTouched(prev => ({...prev, birthday: true}));
-    }
-
-    if (Platform.OS === 'android') {
-      setShowDatePicker(false);
-    }
-  };
-
-  const openBirthdayPicker = () => {
-    if (Platform.OS === 'web') {
-      return;
-    }
-
-    setShowDatePicker(true);
-  };
-
-  const webBirthdayValue = `${formData.birthday.getFullYear()}-${String(
-    formData.birthday.getMonth() + 1,
-  ).padStart(2, '0')}-${String(formData.birthday.getDate()).padStart(2, '0')}`;
-  const formattedBirthday = formData.birthday.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-
-  const handleWebDateInputChange = (event: any) => {
-    const value = event?.target?.value;
-    if (!value) {
-      return;
-    }
-
-    const [year, month, day] = String(value)
-      .split('-')
-      .map(part => Number(part));
-    const selectedDate = new Date(year, month - 1, day);
-
-    if (!Number.isNaN(selectedDate.getTime())) {
-      setFormData(prev => ({...prev, birthday: selectedDate}));
-      setTouched(prev => ({...prev, birthday: true}));
-    }
-  };
-
   const togglePassion = (p: string) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const exists = prev.passions.includes(p);
       return {
         ...prev,
         passions: exists
-          ? prev.passions.filter(item => item !== p)
+          ? prev.passions.filter((item) => item !== p)
           : [...prev.passions, p],
       };
     });
@@ -260,7 +278,7 @@ export const Onboarding = () => {
     return (
       <View style={styles.fieldBlock}>
         <View style={styles.chipContainer}>
-          {options.map(option => {
+          {options.map((option) => {
             const isSelected = multiple
               ? Array.isArray(selectedValue) && selectedValue.includes(option)
               : selectedValue === option;
@@ -268,10 +286,12 @@ export const Onboarding = () => {
             return (
               <Chip
                 key={option}
-                chipStyle={{
-                  paddingVertical: 10,
-                  paddingHorizontal: 20,
-                }}
+                chipStyle={
+                  {
+                    paddingVertical: 10,
+                    paddingHorizontal: 20,
+                  } as object
+                }
                 label={option}
                 onSelect={onSelect}
                 selected={isSelected}
@@ -288,7 +308,7 @@ export const Onboarding = () => {
 
   const renderStepFields = () => {
     switch (currentStepConfig?.id) {
-      case 'name':
+      case "name":
         return (
           <View style={styles.fieldBlock}>
             <TextInputComponent
@@ -298,91 +318,126 @@ export const Onboarding = () => {
               placeholderTextColor={hexToRgbA(defaultTheme.black, 40)}
               value={formData.name}
               error={nameError}
-              onChangeText={value =>
-                setFormData(prev => ({...prev, name: value}))
+              onChangeText={(value) =>
+                setFormData((prev) => ({ ...prev, name: value }))
               }
-              onBlur={() => setTouched(prev => ({...prev, name: true}))}
+              onBlur={() => setTouched((prev) => ({ ...prev, name: true }))}
             />
           </View>
         );
-      case 'birthday':
+      case "birthday":
         return (
           <View style={styles.fieldBlock}>
             <DatePickerField
               label={currentStepConfig.fieldLabel}
               required={currentStepConfig.required}
-              value={formattedBirthday}
-              onPress={openBirthdayPicker}
+              value={formData.birthday}
+              onChange={(nextDate) => {
+                setFormData((prev) => ({ ...prev, birthday: nextDate }));
+                setTouched((prev) => ({ ...prev, birthday: true }));
+              }}
+              maximumDate={new Date()}
               error={birthdayError}
-              iconColor={defaultTheme.pinkText}
-              fieldStyle={styles.datePickerTrigger}>
-              {Platform.OS === 'web' ? (
-                <WebDateInput
-                  type="date"
-                  value={webBirthdayValue}
-                  max={webTodayDate}
-                  onChange={handleWebDateInputChange}
-                  aria-label="Birthday"
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    width: '100%',
-                    height: '100%',
-                    opacity: 0,
-                    cursor: 'pointer',
-                  }}
-                />
-              ) : null}
-            </DatePickerField>
-
-            {showDatePicker && Platform.OS !== 'web' && (
-              <DateTimePicker
-                mode="date"
-                value={formData.birthday}
-                display={Platform.OS === 'ios' ? 'inline' : 'calendar'}
-                onChange={handleDateChange}
-                maximumDate={new Date()}
-              />
-            )}
-
-            {showDatePicker && Platform.OS === 'ios' ? (
-              <Pressable
-                onPress={() => setShowDatePicker(false)}
-                style={styles.dateDoneButton}>
-                <Text style={styles.dateDoneButtonText}>Done</Text>
-              </Pressable>
-            ) : null}
+            />
           </View>
         );
-      case 'gender':
-      case 'orientation':
-      case 'passions':
+      case "gender":
+      case "orientation":
+      case "passions":
         return renderSelectionChips({
           options: currentStepConfig.options,
           selectedValue:
-            currentStepConfig.id === 'gender'
+            currentStepConfig.id === "gender"
               ? formData.gender
-              : currentStepConfig.id === 'orientation'
+              : currentStepConfig.id === "orientation"
                 ? formData.orientation
                 : formData.passions,
-          onSelect: selected => {
-            if (currentStepConfig.id === 'gender') {
-              setFormData(prev => ({...prev, gender: selected}));
+          onSelect: (selected) => {
+            if (currentStepConfig.id === "gender") {
+              setFormData((prev) => ({ ...prev, gender: selected }));
               return;
             }
 
-            if (currentStepConfig.id === 'orientation') {
-              setFormData(prev => ({...prev, orientation: selected}));
+            if (currentStepConfig.id === "orientation") {
+              setFormData((prev) => ({ ...prev, orientation: selected }));
               return;
             }
 
             togglePassion(selected);
           },
-          multiple: currentStepConfig.selectionMode === 'multiple',
+          multiple: currentStepConfig.selectionMode === "multiple",
         });
+      case "photos":
+        return (
+          <View style={styles.fieldBlock}>
+            <View style={styles.photoGrid}>
+              {formData.photos.map((photoUri, index) => {
+                const hasPhoto = Boolean(photoUri);
+
+                return (
+                  <Pressable
+                    key={`photo-slot-${index}`}
+                    onPress={() => pickPhoto(index)}
+                    style={[
+                      styles.photoCard,
+                      hasPhoto ? styles.photoCardFilled : null,
+                    ]}
+                  >
+                    {hasPhoto ? (
+                      <>
+                        <Image
+                          source={{ uri: photoUri }}
+                          style={styles.photoPreview}
+                          contentFit="cover"
+                        />
+                        <Pressable
+                          onPress={() => removePhoto(index)}
+                          style={styles.removePhotoButton}
+                        >
+                          <Icon
+                            name="close"
+                            size={16}
+                            color={defaultTheme.white}
+                          />
+                        </Pressable>
+                      </>
+                    ) : (
+                      <View style={styles.photoPlaceholder}>
+                        <View style={styles.photoPlusIconWrap}>
+                          <Icon
+                            name="add"
+                            size={22}
+                            color={defaultTheme.primary}
+                          />
+                        </View>
+                        <Text style={styles.photoPlaceholderTitle}>
+                          {index === 0 ? "Main photo" : `Photo ${index + 1}`}
+                        </Text>
+                        <Text style={styles.photoPlaceholderText}>
+                          Tap to upload
+                        </Text>
+                      </View>
+                    )}
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <View style={styles.photoTipsCard}>
+              <Text style={styles.photoTipsTitle}>Photo tips</Text>
+              {currentStepConfig.helperPoints.map((point) => (
+                <View key={point} style={styles.photoTipRow}>
+                  <View style={styles.photoTipDot} />
+                  <Text style={styles.photoTipText}>{point}</Text>
+                </View>
+              ))}
+            </View>
+
+            {photosError ? (
+              <Text style={styles.submitErrorText}>{photosError}</Text>
+            ) : null}
+          </View>
+        );
       default:
         return null;
     }
@@ -391,68 +446,99 @@ export const Onboarding = () => {
   return (
     <View style={styles.wrapper}>
       <Header prefixTitle="Onboarding" />
-      <View style={styles.background}>
-        <View style={styles.progressHeader}>
-          <Text style={styles.stepText}>
-            Step {step + 1} of {totalSteps}
-          </Text>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, {width: `${progressPercent}%`}]} />
+      <KeyboardScreenLayout
+        containerStyle={styles.keyboardLayout}
+        keyboardVerticalOffset={72}
+        contentContainerStyle={styles.keyboardContent}
+        scrollContentContainerStyle={styles.keyboardScrollContent}
+        footerContainerStyle={styles.keyboardFooter}
+        footer={
+          <>
+            <ButtonComponent
+              buttonText={
+                isSubmitting
+                  ? step === totalSteps - 1
+                    ? onboardingConfig.cta.uploading
+                    : onboardingConfig.cta.saving
+                  : step === totalSteps - 1
+                    ? onboardingConfig.cta.finish
+                    : onboardingConfig.cta.continue
+              }
+              viewStyle={styles.continueButton}
+              onPress={handleContinue}
+              disabled={!isStepValid() || isSubmitting}
+            />
+            {submitState === "error" && submitError ? (
+              <Text style={styles.submitErrorText}>{submitError}</Text>
+            ) : null}
+          </>
+        }
+      >
+        <View style={styles.background}>
+          <View style={styles.progressHeader}>
+            <Text style={styles.stepText}>
+              Step {step + 1} of {totalSteps}
+            </Text>
+            <View style={styles.progressTrack}>
+              <View
+                style={[styles.progressFill, { width: `${progressPercent}%` }]}
+              />
+            </View>
           </View>
-        </View>
 
-        <Animated.View
-          key={step}
-          entering={
-            direction === 'forward'
-              ? SlideInRight.duration(260)
-              : SlideInLeft.duration(260)
-          }
-          exiting={
-            direction === 'forward'
-              ? SlideOutLeft.duration(220)
-              : SlideOutRight.duration(220)
-          }
-          style={styles.container}>
-          <View style={styles.cardTopRow}>
-            {step !== 0 ? (
-              <Pressable onPress={prevStep} style={styles.inlineBackBtn}>
-                <Icon name="chevron-back" size={22} color={defaultTheme.darkText} />
-                <Text style={styles.inlineBackLabel}>Back</Text>
-              </Pressable>
-            ) : (
-              <View style={styles.inlineBackPlaceholder} />
-            )}
-          </View>
-          <Text style={styles.title}>{currentStepConfig?.title}</Text>
-          <Text style={styles.subtitle}>{currentStepConfig?.subtitle}</Text>
-          {renderStepFields()}
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.duration(320)} exiting={FadeOutDown.duration(180)}>
-          <ButtonComponent
-            buttonText={
-              isSubmitting
-                ? onboardingConfig.cta.saving
-                : step === totalSteps - 1
-                  ? onboardingConfig.cta.finish
-                  : onboardingConfig.cta.continue
+          <Animated.View
+            key={step}
+            entering={
+              direction === "forward"
+                ? SlideInRight.duration(260)
+                : SlideInLeft.duration(260)
             }
-            viewStyle={styles.continueButton}
-            onPress={handleContinue}
-            disabled={!isStepValid() || isSubmitting}
-          />
-          {submitState === 'error' && submitError ? (
-            <Text style={styles.submitErrorText}>{submitError}</Text>
-          ) : null}
-        </Animated.View>
-      </View>
+            exiting={
+              direction === "forward"
+                ? SlideOutLeft.duration(220)
+                : SlideOutRight.duration(220)
+            }
+            style={styles.container}
+          >
+            <View style={styles.cardTopRow}>
+              {step !== 0 ? (
+                <Pressable onPress={prevStep} style={styles.inlineBackBtn}>
+                  <Icon
+                    name="chevron-back"
+                    size={22}
+                    color={defaultTheme.darkText}
+                  />
+                  <Text style={styles.inlineBackLabel}>Back</Text>
+                </Pressable>
+              ) : (
+                <View style={styles.inlineBackPlaceholder} />
+              )}
+            </View>
+            <Text style={styles.title}>{currentStepConfig?.title}</Text>
+            <Text style={styles.subtitle}>{currentStepConfig?.subtitle}</Text>
+            {renderStepFields()}
+          </Animated.View>
+        </View>
+      </KeyboardScreenLayout>
 
-      {submitState === 'success' ? (
-        <Animated.View entering={FadeIn.duration(220)} exiting={FadeOut.duration(180)} style={styles.successOverlay}>
-          <Animated.View entering={ZoomIn.duration(280)} style={styles.successCard}>
-            <Icon name="checkmark-circle" size={74} color={defaultTheme.pinkPrimary} />
-            <Text style={styles.successTitle}>{onboardingConfig.success.title}</Text>
+      {submitState === "success" ? (
+        <Animated.View
+          entering={FadeIn.duration(220)}
+          exiting={FadeOut.duration(180)}
+          style={styles.successOverlay}
+        >
+          <Animated.View
+            entering={ZoomIn.duration(280)}
+            style={styles.successCard}
+          >
+            <Icon
+              name="checkmark-circle"
+              size={74}
+              color={defaultTheme.pinkPrimary}
+            />
+            <Text style={styles.successTitle}>
+              {onboardingConfig.success.title}
+            </Text>
             <Text style={styles.successSubtitle}>
               {onboardingConfig.success.subtitle}
             </Text>

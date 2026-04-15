@@ -3,15 +3,15 @@ import * as React from "react";
 import { LogBox, Platform, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import {
-  RobotoCondensed_400Regular,
-  RobotoCondensed_500Medium,
+  Montserrat_400Regular,
+  Montserrat_500Medium,
   useFonts,
-} from "@expo-google-fonts/roboto-condensed";
+} from "@expo-google-fonts/montserrat";
 import { AppNavigation } from "./src/config/app-navigation/index";
 import { ToastHost } from "./src/components/Toast";
 
 const WEB_MAX_WIDTH = 480;
-const APP_FONT_FAMILY = Platform.OS === "web" ? "Roboto Condensed, sans-serif" : "RobotoCondensed_400Regular";
+const APP_FONT_FAMILY = Platform.OS === "web" ? "Montserrat, sans-serif" : "Montserrat_400Regular";
 const WEB_INPUT_RESET_STYLE =
   Platform.OS === "web"
     ? ({
@@ -54,8 +54,8 @@ const applyGlobalAppFont = () => {
 
 function App() {
   const [fontsLoaded] = useFonts({
-    RobotoCondensed_400Regular,
-    RobotoCondensed_500Medium,
+    Montserrat_400Regular,
+    Montserrat_500Medium,
   });
 
   if (__DEV__) {

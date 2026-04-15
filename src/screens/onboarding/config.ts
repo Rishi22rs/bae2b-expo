@@ -1,11 +1,12 @@
 export type OnboardingStepId =
-  | 'name'
-  | 'birthday'
-  | 'gender'
-  | 'orientation'
-  | 'passions';
+  | "name"
+  | "birthday"
+  | "gender"
+  | "orientation"
+  | "passions"
+  | "photos";
 
-type SelectionMode = 'single' | 'multiple';
+type SelectionMode = "single" | "multiple";
 
 interface OnboardingStepBase {
   id: OnboardingStepId;
@@ -14,86 +15,109 @@ interface OnboardingStepBase {
 }
 
 interface NameStepConfig extends OnboardingStepBase {
-  id: 'name';
+  id: "name";
   fieldLabel: string;
   placeholder: string;
   required: boolean;
 }
 
 interface BirthdayStepConfig extends OnboardingStepBase {
-  id: 'birthday';
+  id: "birthday";
   fieldLabel: string;
   required: boolean;
 }
 
 interface SelectionStepConfig extends OnboardingStepBase {
-  id: 'gender' | 'orientation' | 'passions';
+  id: "gender" | "orientation" | "passions";
   selectionMode: SelectionMode;
   options: string[];
+}
+
+interface PhotosStepConfig extends OnboardingStepBase {
+  id: "photos";
+  maxPhotos: number;
+  minPhotos: number;
+  helperPoints: string[];
 }
 
 export type OnboardingStepConfig =
   | NameStepConfig
   | BirthdayStepConfig
-  | SelectionStepConfig;
+  | SelectionStepConfig
+  | PhotosStepConfig;
 
 export const onboardingConfig = {
   minimumAge: 18,
   cta: {
-    continue: 'Continue',
-    finish: 'Finish',
-    saving: 'Saving...',
+    continue: "Continue",
+    finish: "Finish",
+    saving: "Saving...",
+    uploading: "Uploading photos...",
   },
   success: {
-    title: 'Onboarding Done',
-    subtitle: 'Taking you to Home...',
+    title: "Onboarding Done",
+    subtitle: "Taking you to Home...",
     navigateDelayMs: 1100,
   },
   validation: {
-    nameRequired: 'Please enter your first name.',
-    birthdayRequired: 'Please select your birthday.',
+    nameRequired: "Please enter your first name.",
+    birthdayRequired: "Please select your birthday.",
     birthdayMinimumAge: (minAge: number) =>
       `You must be at least ${minAge} years old.`,
-    genderRequired: 'Please select your gender.',
-    orientationRequired: 'Please select your orientation.',
-    passionsRequired: 'Please select at least one passion.',
+    genderRequired: "Please select your gender.",
+    orientationRequired: "Please select your orientation.",
+    passionsRequired: "Please select at least one passion.",
+    photosRequired: (minPhotos: number) =>
+      `Add at least ${minPhotos} photo${minPhotos > 1 ? "s" : ""} to continue.`,
   },
   steps: [
     {
-      id: 'name',
-      title: 'What is your first name?',
-      subtitle: 'This is how people will see you.',
-      fieldLabel: 'First Name',
-      placeholder: 'First name',
+      id: "name",
+      title: "What is your first name?",
+      subtitle: "This is how people will see you.",
+      fieldLabel: "First Name",
+      placeholder: "First name",
       required: true,
     },
     {
-      id: 'birthday',
-      title: 'When is your birthday?',
-      subtitle: 'We use this to show your age on profile.',
-      fieldLabel: 'Birthday',
+      id: "birthday",
+      title: "When is your birthday?",
+      subtitle: "We use this to show your age on profile.",
+      fieldLabel: "Birthday",
       required: true,
     },
     {
-      id: 'gender',
-      title: 'How do you identify?',
-      subtitle: 'Pick the option that best matches you.',
-      selectionMode: 'single',
-      options: ['Woman', 'Man', 'More'],
+      id: "gender",
+      title: "How do you identify?",
+      subtitle: "Pick the option that best matches you.",
+      selectionMode: "single",
+      options: ["Woman", "Man", "More"],
     },
     {
-      id: 'orientation',
-      title: 'What is your orientation?',
-      subtitle: 'This helps us personalize better matches.',
-      selectionMode: 'single',
-      options: ['Straight', 'Gay', 'Lesbian', 'Bisexual', 'Asexual'],
+      id: "orientation",
+      title: "What is your orientation?",
+      subtitle: "This helps us personalize better matches.",
+      selectionMode: "single",
+      options: ["Straight", "Gay", "Lesbian", "Bisexual", "Asexual"],
     },
     {
-      id: 'passions',
-      title: 'Pick your passions',
-      subtitle: 'Choose interests to make your profile stand out.',
-      selectionMode: 'multiple',
-      options: ['Music', 'Movies', 'Travel', 'Fitness', 'Cooking', 'Art'],
+      id: "passions",
+      title: "Pick your passions",
+      subtitle: "Choose interests to make your profile stand out.",
+      selectionMode: "multiple",
+      options: ["Music", "Movies", "Travel", "Fitness", "Cooking", "Art"],
+    },
+    {
+      id: "photos",
+      title: "Add your best photos",
+      subtitle: "Show your vibe with a few clean, real pictures.",
+      minPhotos: 1,
+      maxPhotos: 4,
+      helperPoints: [
+        "Use bright, clear photos where your face is easy to see.",
+        "Mix one close-up with one full look for a balanced profile.",
+        "Skip heavy filters, mirror clutter, and group shots as first photo.",
+      ],
     },
   ] as OnboardingStepConfig[],
 };

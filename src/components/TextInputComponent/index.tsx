@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Platform,
   StyleProp,
@@ -7,23 +8,17 @@ import {
   TextStyle,
   View,
   ViewStyle,
-} from 'react-native';
-import {useState} from 'react';
-import {createStyleSheet} from './style';
-import SearchIcon from 'react-native-vector-icons/EvilIcons';
+} from "react-native";
+import { createStyleSheet } from "./style";
 
 interface TextInputComponentProps extends TextInputProps {
   viewStyle?: StyleProp<ViewStyle>;
   inputStyle?: StyleProp<TextStyle>;
   inputContainerStyle?: StyleProp<ViewStyle>;
-  iconName?: string;
-  iconSize?: number;
-  showIcon?: boolean;
   label?: string;
   labelStyle?: StyleProp<TextStyle>;
   error?: string;
   errorStyle?: StyleProp<TextStyle>;
-  numOfLines?: number;
   isError?: boolean;
   required?: boolean;
 }
@@ -32,84 +27,68 @@ export const TextInputComponent = ({
   viewStyle,
   inputStyle,
   inputContainerStyle,
-  iconName,
-  iconSize = 24,
-  showIcon = false,
   label,
   labelStyle,
   error,
   errorStyle,
-  numOfLines = 1,
   isError = false,
   required = false,
   onFocus,
   onBlur,
-  placeholderTextColor,
-  multiline,
   ...props
 }: TextInputComponentProps) => {
   const style = createStyleSheet();
   const [isFocused, setIsFocused] = useState(false);
+
   const hasError = Boolean(error) || isError;
-  const useMultiline = multiline || numOfLines > 1;
 
   return (
-    <View style={style.fieldWrapper}>
-      {label && (
-        <Text style={[style.label, labelStyle, hasError && style.labelError]}>
-          {label}
-          {required && <Text style={style.requiredMark}> *</Text>}
-        </Text>
-      )}
+    <View style={style.wrapper}>
       <View
         style={[
-          style.inputContainer,
+          style.inputCard,
           viewStyle,
           inputContainerStyle,
-          isFocused && !hasError && style.inputContainerFocused,
-          hasError && style.inputContainerError,
-        ]}>
-        {showIcon && (
-          <SearchIcon
-            name={iconName || 'search'}
-            size={iconSize}
-            style={style.iconStyle}
-          />
+          isFocused && !hasError && style.inputFocused,
+          hasError && style.inputError,
+        ]}
+      >
+        {/* Label INSIDE */}
+        {label && (
+          <Text style={[style.label, labelStyle, hasError && style.labelError]}>
+            {label}
+            {required && <Text style={style.requiredMark}> *</Text>}
+          </Text>
         )}
+
         <TextInput
           {...props}
           style={[
-            style.textInput,
-            useMultiline && style.textInputMultiline,
+            style.input,
+            Platform.OS === "web"
+              ? ({
+                  outlineStyle: "none",
+                  outlineWidth: 0,
+                  boxShadow: "none",
+                  appearance: "none",
+                } as object)
+              : null,
             inputStyle,
           ]}
-          onFocus={event => {
+          onFocus={(e) => {
             setIsFocused(true);
-            onFocus?.(event);
+            onFocus?.(e);
           }}
-          onBlur={event => {
+          onBlur={(e) => {
             setIsFocused(false);
-            onBlur?.(event);
+            onBlur?.(e);
           }}
-          placeholderTextColor={placeholderTextColor || '#9ca3af'}
-          multiline={useMultiline}
-          numberOfLines={useMultiline ? numOfLines : 1}
-          textAlignVertical={useMultiline ? 'top' : 'center'}
-          cursorColor={hasError ? '#ef4444' : undefined}
-          selectionColor={hasError ? '#ef4444' : undefined}
+          placeholderTextColor="#b9b9b9"
           underlineColorAndroid="transparent"
         />
       </View>
-      {!!error && (
-        <Text
-          style={[
-            style.errorText,
-            errorStyle,
-          ]}
-          accessibilityLiveRegion="polite">
-          {error}
-        </Text>
-      )}
+
+      {!!error && <Text style={[style.errorText, errorStyle]}>{error}</Text>}
     </View>
   );
 };

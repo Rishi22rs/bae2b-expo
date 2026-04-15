@@ -6,10 +6,11 @@ import { useEffect, useState } from "react";
 import { Platform } from "react-native";
 import { navigationConstants } from "../../constants/app-navigation";
 import { Stepper } from "../../screens/stepper/index";
-import { navigationRef } from "./navigation-ref";
 import { AuthenticationRoute } from "./authentication-route";
 import { BottomTabs } from "./bottom-tabs";
 import { MatchMRoute } from "./match-route";
+import { navigationRef } from "./navigation-ref";
+import { OnboardingRoute } from "./onboarding-route";
 import { ProfileRoute } from "./profile-route";
 
 const MasterStack = createNativeStackNavigator();
@@ -81,6 +82,7 @@ const withAuthGuard = (ScreenComponent: React.ComponentType<any>) => {
 const ProtectedBottomTabs = withAuthGuard(BottomTabs);
 const ProtectedProfileRoute = withAuthGuard(ProfileRoute);
 const ProtectedMatchRoute = withAuthGuard(MatchMRoute);
+const ProtectedOnboardingRoute = withAuthGuard(OnboardingRoute);
 
 export const AppNavigation = () => {
   return (
@@ -105,6 +107,10 @@ export const AppNavigation = () => {
         <MasterStack.Screen
           name={navigationConstants.MATCH_ROUTE}
           component={ProtectedMatchRoute}
+        />
+        <MasterStack.Screen
+          name={navigationConstants.ONBOARDING_ROUTE}
+          component={ProtectedOnboardingRoute}
         />
       </MasterStack.Navigator>
     </NavigationContainer>

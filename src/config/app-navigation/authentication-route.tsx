@@ -1,13 +1,12 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { Platform } from "react-native";
 import { useEffect, useState } from "react";
+import { Platform } from "react-native";
 import { navigationConstants } from "../../constants/app-navigation";
 import { Login } from "../../screens/login/index";
 import { LoginScreen } from "../../screens/login/login-screen";
 import { OtpScreen } from "../../screens/login/otp-screen";
-import { Onboarding } from "../../screens/onboarding/index";
 
 const AuthenticationStack = createNativeStackNavigator();
 
@@ -76,10 +75,6 @@ export const AuthenticationRoute = () => {
       <AuthenticationStack.Screen
         name={navigationConstants.OTP_PAGE}
         component={OtpScreen}
-      />
-      <AuthenticationStack.Screen
-        name={navigationConstants.ONBOARDING}
-        component={Onboarding}
       />
     </AuthenticationStack.Navigator>
   );

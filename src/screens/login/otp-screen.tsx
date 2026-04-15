@@ -2,10 +2,16 @@ import {CommonActions, useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {StatusBar} from 'expo-status-bar';
 import {useEffect, useMemo, useState} from 'react';
-import {Platform, Pressable, SafeAreaView, Text, View} from 'react-native';
+import {
+  Platform,
+  Pressable,
+  SafeAreaView,
+  Text,
+} from 'react-native';
 import {OtpInput} from 'react-native-otp-entry';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useLogin, useOtp} from '../../api/auth';
+import {KeyboardScreenLayout} from '../../components/KeyboardScreenLayout';
 import {TextComponent} from '../../components/TextComponent';
 import {navigationConstants} from '../../constants/app-navigation';
 import {
@@ -160,7 +166,31 @@ export const OtpScreen = ({route}: {route: any}) => {
   return (
     <SafeAreaView style={style.authRoot}>
       <StatusBar style="dark" backgroundColor="#ffffff" />
-      <View style={style.authContainer}>
+      <KeyboardScreenLayout
+        containerStyle={style.authContainer}
+        contentContainerStyle={style.authBody}
+        footerContainerStyle={style.authFooter}
+        footer={
+          <Pressable
+            disabled={!canVerifyOtp}
+            onPress={handleOtpVerify}
+            style={[
+              style.authPrimaryButton,
+              !canVerifyOtp ? style.authPrimaryButtonDisabled : null,
+            ]}>
+            <TextComponent
+              viewStyle={
+                canVerifyOtp
+                  ? style.authPrimaryButtonText
+                  : {
+                      ...style.authPrimaryButtonText,
+                      ...style.authPrimaryButtonTextDisabled,
+                    }
+              }>
+              {isVerifying ? 'Verifying OTP...' : 'Verify OTP'}
+            </TextComponent>
+          </Pressable>
+        }>
         <Icon name="phone-portrait-outline" size={26} color="#111111" />
 
         <TextComponent viewStyle={style.authTitle}>Enter the code</TextComponent>
@@ -217,29 +247,7 @@ export const OtpScreen = ({route}: {route: any}) => {
         {!!infoMessage ? (
           <TextComponent viewStyle={style.authInfoText}>{infoMessage}</TextComponent>
         ) : null}
-
-        <View style={style.authSpacer} />
-
-        <Pressable
-          disabled={!canVerifyOtp}
-          onPress={handleOtpVerify}
-          style={[
-            style.authPrimaryButton,
-            !canVerifyOtp ? style.authPrimaryButtonDisabled : null,
-          ]}>
-          <TextComponent
-            viewStyle={
-              canVerifyOtp
-                ? style.authPrimaryButtonText
-                : {
-                    ...style.authPrimaryButtonText,
-                    ...style.authPrimaryButtonTextDisabled,
-                  }
-            }>
-            {isVerifying ? 'Verifying OTP...' : 'Verify OTP'}
-          </TextComponent>
-        </Pressable>
-      </View>
+      </KeyboardScreenLayout>
     </SafeAreaView>
   );
 };

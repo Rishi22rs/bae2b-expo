@@ -48,25 +48,24 @@
 //   );
 // };
 
-import React from 'react';
+import { screenWidth } from "@/utils/dimensions";
+import { useNavigation } from "@react-navigation/native";
+import React from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
+  FlatList,
   Image,
   Pressable,
-  FlatList,
   SafeAreaView,
-} from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import {LinearGradient} from 'expo-linear-gradient';
-import {createStyleSheet} from './style';
-import {useNavigation} from '@react-navigation/native';
-import {logout} from '../../utils/useLogout';
-import {navigationConstants} from '../../constants/app-navigation';
-import {Header} from '../../components/Header';
-import {ButtonComponent} from '../../components/ButtonComponent';
-import Animated, {SlideInDown} from 'react-native-reanimated';
+  Text,
+  View,
+} from "react-native";
+import Animated, { SlideInDown } from "react-native-reanimated";
+import Icon from "react-native-vector-icons/Ionicons";
+import { ButtonComponent } from "../../components/ButtonComponent";
+import { Header } from "../../components/Header";
+import { navigationConstants } from "../../constants/app-navigation";
+import { logout } from "../../utils/useLogout";
+import { createStyleSheet } from "./style";
 
 export const Profile = () => {
   const styles = createStyleSheet();
@@ -80,10 +79,10 @@ export const Profile = () => {
   };
 
   const profileOptions = [
-    {label: 'Settings', icon: 'settings-outline'},
-    {label: 'Terms & Conditions', icon: 'globe-outline'},
-    {label: 'Privacy Policy', icon: 'notifications-outline'},
-    {label: 'About Us', icon: 'eye-outline'},
+    { label: "Settings", icon: "settings-outline" },
+    { label: "Terms & Conditions", icon: "globe-outline" },
+    { label: "Privacy Policy", icon: "notifications-outline" },
+    { label: "About Us", icon: "eye-outline" },
   ];
 
   return (
@@ -94,7 +93,7 @@ export const Profile = () => {
         <View style={styles.avatarContainer}>
           <Image
             source={{
-              uri: 'https://randomuser.me/api/portraits/men/32.jpg',
+              uri: "https://randomuser.me/api/portraits/men/32.jpg",
             }}
             style={styles.avatar}
           />
@@ -108,9 +107,9 @@ export const Profile = () => {
 
       <FlatList
         data={profileOptions}
-        keyExtractor={item => item.label}
+        keyExtractor={(item) => item.label}
         contentContainerStyle={styles.optionsContainer}
-        renderItem={({item, index}) => (
+        renderItem={({ item, index }) => (
           <Animated.View entering={SlideInDown.duration(200 + 100 * index)}>
             <Pressable onPress={item?.onPress} style={styles.optionRow}>
               <View style={styles.optionLeft}>
@@ -134,10 +133,14 @@ export const Profile = () => {
         </Pressable>
       </LinearGradient> */}
       <ButtonComponent
-        buttonText={'Logout'}
+        buttonText={"Logout"}
         showIcon
         onPress={() => logout(navigation)}
-        viewStyle={{marginHorizontal: 16, marginBottom: 16}}
+        viewStyle={{
+          marginBottom: 16,
+          width: screenWidth - 32,
+          marginLeft: 16,
+        }}
       />
     </SafeAreaView>
   );

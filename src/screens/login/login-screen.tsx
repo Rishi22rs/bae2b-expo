@@ -1,38 +1,48 @@
-import {useNavigation} from '@react-navigation/native';
-import {useMemo, useState} from 'react';
-import {Platform, Pressable, SafeAreaView, TextInput, View} from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import {StatusBar} from 'expo-status-bar';
-import {useLogin} from '../../api/auth';
-import {TextComponent} from '../../components/TextComponent';
-import {navigationConstants} from '../../constants/app-navigation';
-import {getApiErrorMessage, getMessageFromPayload} from '../../utils/otp';
-import {createStyleSheet} from './style';
+import { useNavigation } from "@react-navigation/native";
+import { StatusBar } from "expo-status-bar";
+import { useMemo, useState } from "react";
+import {
+  Platform,
+  Pressable,
+  SafeAreaView,
+  TextInput,
+  View,
+} from "react-native";
+import Icon from "react-native-vector-icons/Ionicons";
+import { useLogin } from "../../api/auth";
+import { KeyboardScreenLayout } from "../../components/KeyboardScreenLayout";
+import { TextComponent } from "../../components/TextComponent";
+import { navigationConstants } from "../../constants/app-navigation";
+import { getApiErrorMessage, getMessageFromPayload } from "../../utils/otp";
+import { createStyleSheet } from "./style";
 
 export const LoginScreen = () => {
   const style = createStyleSheet();
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [requestError, setRequestError] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [requestError, setRequestError] = useState("");
   const [isRequestingOtp, setIsRequestingOtp] = useState(false);
   const navigation = useNavigation();
 
-  const normalizedPhone = useMemo(() => phoneNumber.replace(/\D/g, ''), [phoneNumber]);
+  const normalizedPhone = useMemo(
+    () => phoneNumber.replace(/\D/g, ""),
+    [phoneNumber],
+  );
   const canRequestOtp = normalizedPhone.length >= 10 && !isRequestingOtp;
 
   const handleRequestOtp = async () => {
     if (!normalizedPhone || normalizedPhone.length < 10) {
-      setRequestError('Please enter a valid 10-digit phone number.');
+      setRequestError("Please enter a valid 10-digit phone number.");
       return;
     }
 
     setIsRequestingOtp(true);
-    setRequestError('');
+    setRequestError("");
 
     try {
-      const response = await useLogin({phone_number: normalizedPhone});
+      const response = await useLogin({ phone_number: normalizedPhone });
       const serverMessage = getMessageFromPayload(
         response?.data,
-        'OTP sent successfully.',
+        "OTP sent successfully.",
       );
 
       (navigation as any).navigate(navigationConstants.OTP_PAGE, {
@@ -42,7 +52,7 @@ export const LoginScreen = () => {
       });
     } catch (error) {
       setRequestError(
-        getApiErrorMessage(error, 'Unable to send OTP. Please try again.'),
+        getApiErrorMessage(error, "Unable to send OTP. Please try again."),
       );
     } finally {
       setIsRequestingOtp(false);
@@ -52,17 +62,50 @@ export const LoginScreen = () => {
   return (
     <SafeAreaView style={style.authRoot}>
       <StatusBar style="dark" backgroundColor="#ffffff" />
-      <View style={style.authContainer}>
+      <KeyboardScreenLayout
+        containerStyle={style.authContainer}
+        contentContainerStyle={style.authBody}
+        footerContainerStyle={style.authFooter}
+        footer={
+          <Pressable
+            disabled={!canRequestOtp}
+            onPress={handleRequestOtp}
+            style={[
+              style.authPrimaryButton,
+              !canRequestOtp ? style.authPrimaryButtonDisabled : null,
+            ]}
+          >
+            <TextComponent
+              viewStyle={
+                canRequestOtp
+                  ? style.authPrimaryButtonText
+                  : {
+                      ...style.authPrimaryButtonText,
+                      ...style.authPrimaryButtonTextDisabled,
+                    }
+              }
+            >
+              {isRequestingOtp ? "Requesting code..." : "Get Verification code"}
+            </TextComponent>
+          </Pressable>
+        }
+      >
         <Icon name="phone-portrait-outline" size={26} color="#111111" />
 
-        <TextComponent viewStyle={style.authTitle}>Enter your digits.</TextComponent>
+        <TextComponent viewStyle={style.authTitle}>
+          Enter your digits.
+        </TextComponent>
 
         <View style={style.phoneRow}>
           <View style={style.countryCard}>
-            <TextComponent viewStyle={style.authFieldLabel}>Country</TextComponent>
+            <TextComponent viewStyle={style.authFieldLabel}>
+              Country
+            </TextComponent>
             <View style={style.countryValueRow}>
               <TextComponent viewStyle={style.countryFlag}>🇮🇳</TextComponent>
-              <TextComponent viewStyle={style.phoneValueText}>+91</TextComponent>
+              <TextComponent viewStyle={style.phoneValueText}>
+                +91
+              </TextComponent>
             </View>
           </View>
 
@@ -73,14 +116,14 @@ export const LoginScreen = () => {
             <View style={style.phoneInputWrap}>
               <TextInput
                 value={phoneNumber}
-                onChangeText={value =>
-                  setPhoneNumber(value.replace(/[^\d]/g, '').slice(0, 10))
+                onChangeText={(value) =>
+                  setPhoneNumber(value.replace(/[^\d]/g, "").slice(0, 10))
                 }
                 style={style.phoneInput}
-                placeholder="081234 56789"
+                placeholder="9999999999"
                 placeholderTextColor="#b9b9b9"
                 maxLength={10}
-                keyboardType={Platform.OS === 'web' ? 'numeric' : 'phone-pad'}
+                keyboardType={Platform.OS === "web" ? "numeric" : "phone-pad"}
                 autoCorrect={false}
                 autoCapitalize="none"
                 autoComplete="tel"
@@ -91,31 +134,11 @@ export const LoginScreen = () => {
         </View>
 
         {!!requestError ? (
-          <TextComponent viewStyle={style.authErrorText}>{requestError}</TextComponent>
-        ) : null}
-
-        <View style={style.authSpacer} />
-
-        <Pressable
-          disabled={!canRequestOtp}
-          onPress={handleRequestOtp}
-          style={[
-            style.authPrimaryButton,
-            !canRequestOtp ? style.authPrimaryButtonDisabled : null,
-          ]}>
-          <TextComponent
-            viewStyle={
-              canRequestOtp
-                ? style.authPrimaryButtonText
-                : {
-                    ...style.authPrimaryButtonText,
-                    ...style.authPrimaryButtonTextDisabled,
-                  }
-            }>
-            {isRequestingOtp ? 'Requesting code...' : 'Get Verification code'}
+          <TextComponent viewStyle={style.authErrorText}>
+            {requestError}
           </TextComponent>
-        </Pressable>
-      </View>
+        ) : null}
+      </KeyboardScreenLayout>
     </SafeAreaView>
   );
 };

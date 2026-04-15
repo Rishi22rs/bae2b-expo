@@ -12,7 +12,7 @@
     "lint": "expo lint"
   },
   "dependencies": {
-    "@expo-google-fonts/roboto-condensed": "^0.4.2",
+    "@expo-google-fonts/montserrat": "^0.4.2",
     "@react-native-async-storage/async-storage": "^2.1.1",
     "@react-native-community/datetimepicker": "^8.3.0",
     "@react-navigation/bottom-tabs": "^7.15.5",
@@ -26,6 +26,8 @@
     "expo-font": "55.0.5-canary-20260328-2049187",
     "expo-glass-effect": "55.0.9-canary-20260328-2049187",
     "expo-image": "55.0.7-canary-20260328-2049187",
+    "expo-image-manipulator": "^55.0.15",
+    "expo-image-picker": "^55.0.15-canary-20260328-2049187",
     "expo-linear-gradient": "^55.0.10-canary-20260328-2049187",
     "expo-linking": "55.0.10-canary-20260328-2049187",
     "expo-location": "^55.1.5-canary-20260328-2049187",

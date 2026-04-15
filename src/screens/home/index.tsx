@@ -1,7 +1,7 @@
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Image, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import Animated, {
   FadeIn,
@@ -37,6 +37,7 @@ export const Home = ({ route }) => {
   const [locationGranted, setLocationGranted] = useState(false);
   const [nearbyUsers, setNearbyUsers] = useState([]);
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [coords, setCoords] = useState();
   const [isDetailShown, setIsDetailShown] = useState(false);
   const [showLikeUnlikeView, setShowLikeUnlikeView] = useState(0);
@@ -78,6 +79,10 @@ export const Home = ({ route }) => {
   useEffect(() => {
     getNearyByUsers();
   }, [coords]);
+
+  useEffect(() => {
+    setCurrentPhotoIndex(0);
+  }, [currentUserIndex]);
 
   const askLocationPermission = async () => {
     setShowLoader(true);
@@ -185,6 +190,26 @@ export const Home = ({ route }) => {
   };
 
   const imageHeight = useSharedValue(screenHeight - 170);
+  const currentUser = nearbyUsers?.[currentUserIndex];
+  const currentUserImages = useMemo(() => {
+    const imageCandidates = [
+      ...(Array.isArray(currentUser?.images) ? currentUser.images : []),
+      ...(Array.isArray(currentUser?.photos) ? currentUser.photos : []),
+      currentUser?.profileImage,
+      currentUser?.profile_image,
+      currentUser?.imageUrl,
+    ];
+
+    return imageCandidates.filter(
+      (imageUri, index, self) =>
+        typeof imageUri === "string" &&
+        imageUri.trim().length > 0 &&
+        self.indexOf(imageUri) === index,
+    );
+  }, [currentUser]);
+  const activeImageUri =
+    currentUserImages[currentPhotoIndex] ||
+    "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e";
 
   const animatedImageStyle = useAnimatedStyle(() => {
     return {
@@ -211,6 +236,16 @@ export const Home = ({ route }) => {
     setIsDetailShown(false);
   };
 
+  const showPreviousPhoto = () => {
+    setCurrentPhotoIndex((prev) => (prev > 0 ? prev - 1 : prev));
+  };
+
+  const showNextPhoto = () => {
+    setCurrentPhotoIndex((prev) =>
+      prev < currentUserImages.length - 1 ? prev + 1 : prev,
+    );
+  };
+
   const renderCard = () => {
     const CardComponent = isDetailShown ? ScrollView : View;
     return (
@@ -222,10 +257,32 @@ export const Home = ({ route }) => {
           <Pressable>
             <Animated.Image
               source={{
-                uri: "https://rukminim2.flixcart.com/image/850/1000/xif0q/poster/s/d/v/medium-anime-girls-fantasy-anime-girls-hd-matte-finish-poster-original-imagh8k9taqepyzs.jpeg?q=90&crop=false",
+                uri: activeImageUri,
               }}
               style={[styles.profileImage, animatedImageStyle]}
             />
+            {currentUserImages.length > 1 ? (
+              <View style={styles.imageProgressRow}>
+                {currentUserImages.map((imageUri, index) => (
+                  <View
+                    key={`${imageUri}-${index}`}
+                    style={[
+                      styles.imageProgressBar,
+                      index === currentPhotoIndex
+                        ? styles.imageProgressBarActive
+                        : null,
+                    ]}
+                  />
+                ))}
+              </View>
+            ) : null}
+            <View style={styles.imageTapOverlay}>
+              <Pressable
+                onPress={showPreviousPhoto}
+                style={styles.imageTapZone}
+              />
+              <Pressable onPress={showNextPhoto} style={styles.imageTapZone} />
+            </View>
             {!isDetailShown ? (
               <View>
                 <LinearGradient
@@ -239,12 +296,12 @@ export const Home = ({ route }) => {
                   end={{ x: 0, y: 0 }}
                   style={styles.userDetailImageTop}
                 >
-                  <Text style={styles.userDetailImageTopText}>
-                    {
-                      nearbyUsers?.[currentUserIndex]?.segregatedList?.[0]
-                        .content
-                    }
-                  </Text>
+                    <Text style={styles.userDetailImageTopText}>
+                      {
+                        nearbyUsers?.[currentUserIndex]?.segregatedList?.[0]
+                          ?.content
+                      }
+                    </Text>
                   <Pressable
                     onPress={() => {
                       if (!isDetailShown) {
@@ -289,14 +346,22 @@ export const Home = ({ route }) => {
 
         {/* Profile Info */}
         <View style={styles.profileInfo}>
-          {nearbyUsers?.[currentUserIndex]?.segregatedList?.map((user) => {
-            return (
-              <View>
-                {getCurrentSection(user)}
-                <View style={styles.seperator} />
-              </View>
-            );
-          })}
+          {nearbyUsers?.[currentUserIndex]?.segregatedList?.length ? (
+            nearbyUsers?.[currentUserIndex]?.segregatedList?.map((user, index) => {
+              return (
+                <View key={`${user?.type}-${user?.title}-${index}`}>
+                  {getCurrentSection(user)}
+                </View>
+              );
+            })
+          ) : (
+            <View style={styles.emptyCard}>
+              <Text style={styles.sectionTitle}>Profile</Text>
+              <Text style={styles.aboutText}>
+                This user has not added profile details yet.
+              </Text>
+            </View>
+          )}
         </View>
       </CardComponent>
     );

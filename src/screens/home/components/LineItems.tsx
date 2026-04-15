@@ -17,7 +17,7 @@ export const LineItems = ({title = '', content = []}) => {
   };
 
   return (
-    <View>
+    <View style={styles.sectionCard}>
       <Text style={styles.sectionTitle}>{title}</Text>
       <View style={styles.interestsContainer}>
         {content?.map((item, key) => {

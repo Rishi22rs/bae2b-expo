@@ -1,427 +1,308 @@
-// import {createStyleSheet} from './style';
-// import {
-//   FlatList,
-//   Image,
-//   Platform,
-//   Pressable,
-//   ScrollView,
-//   Text,
-//   View,
-// } from 'react-native';
-// import {Header} from '../../components/Header';
-// import {CardComponent} from '../../components/CardComponent';
-// import {TextComponent} from '../../components/TextComponent';
-// import {ButtonComponent} from '../../components/ButtonComponent';
-// import {TextInputComponent} from '../../components/TextInputComponent';
-// import {ModalComponent} from '../../components/ModalComponent';
-// import {useEffect, useRef, useState} from 'react';
-// import {Chip} from '../../components/ChipComponent';
-// import {interestsCategories} from '../../constants/profile-info-options';
-// import AntDesignIcon from 'react-native-vector-icons/dist/AntDesign';
-// import {defaultTheme} from '../../config/theme';
-// import {useGetUserInfo} from '../../api/profile';
-// import DateTimePicker from '@react-native-community/datetimepicker';
+import * as ImagePicker from "expo-image-picker";
+import { Image } from "expo-image";
+import React, { useEffect, useState } from "react";
+import { Pressable, Text, View } from "react-native";
+import { uploadImageToCloudinary } from "../../api/onboarding";
+import { useGetUserInfo, useUpdateUserInfo } from "../../api/profile";
+import { ButtonComponent } from "../../components/ButtonComponent";
+import { DatePickerField } from "../../components/DatePickerField";
+import { Header } from "../../components/Header";
+import { KeyboardScreenLayout } from "../../components/KeyboardScreenLayout";
+import { TextInputComponent } from "../../components/TextInputComponent";
+import { showErrorToast, showSuccessToast } from "../../utils/toast";
+import { createStyleSheet } from "./style";
 
-// export const ProfileEdit = ({route}) => {
-// const styles = createStyleSheet();
-// const interestedModalRef = useRef();
-// const [formData, setFormData] = useState({});
-// const [showDatePicker, setShowDatePicker] = useState(false);
-
-// useEffect(() => {
-//   useGetUserInfo().then(res => {
-//     console.log('resss', res);
-//     setFormData(res?.data?.data);
-//   });
-// }, []);
-
-//   return (
-//     <>
-//       <Header />
-//       <ScrollView contentContainerStyle={styles.background}>
-//         <CardComponent viewStyle={{alignItems: 'center', width: '100%'}}>
-//           <TextInputComponent
-//             labelStyle={styles.labelStyle}
-//             placeholder="Your Phone Number"
-//             label="Your Name"
-//             numOfLines={1}
-//             value={formData?.name}
-//           />
-//         </CardComponent>
-//         <CardComponent viewStyle={{alignItems: 'center', width: '100%'}}>
-//           <TextInputComponent
-//             labelStyle={styles.labelStyle}
-//             placeholder="About me"
-//             label="Bio"
-//             numOfLines={5}
-//             value={formData?.bio}
-//           />
-//         </CardComponent>
-//         <CardComponent viewStyle={{alignItems: 'center', width: '100%'}}>
-//           <TextInputComponent
-//             labelStyle={styles.labelStyle}
-//             placeholder="Your Phone Number"
-//             label="Phone Number"
-//             numOfLines={1}
-//             value={formData?.phone_number}
-//             keyboardType="phone-pad"
-//           />
-//         </CardComponent>
-//         <CardComponent>
-//           <TextComponent viewStyle={styles.labelStyle}>Birthday</TextComponent>
-//           <Chip
-//             label={formData?.birthday}
-//             onSelect={() => setShowDatePicker(true)}
-//           />
-//           {showDatePicker && (
-//             <DateTimePicker
-//               mode="date"
-//               value={formData.birthday}
-//               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-//               onChange={(event, date) => {
-//                 if (date) {
-//                   setFormData(prev => ({...prev, birthday: date}));
-//                 }
-//                 setShowDatePicker(false);
-//               }}
-//               maximumDate={new Date()}
-//             />
-//           )}
-//         </CardComponent>
-//         <CardComponent>
-//           <View
-//             style={{
-//               flexDirection: 'row',
-//               alignItems: 'center',
-//               justifyContent: 'space-between',
-//             }}>
-//             <TextComponent viewStyle={styles.labelStyle}>
-//               Interests
-//             </TextComponent>
-//             <Pressable
-//               style={{bottom: 4}}
-//               onPress={() => interestedModalRef.current.onOpenModal()}>
-//               <AntDesignIcon name="edit" size={20} color={defaultTheme.brown} />
-//             </Pressable>
-//           </View>
-//           <View style={{flexWrap: 'wrap', flexDirection: 'row', gap: 8}}>
-//             {formData?.passions?.split(',').map(item => (
-//               <Chip label={item} />
-//             ))}
-//           </View>
-//         </CardComponent>
-//         <CardComponent>
-//           <View
-//             style={{
-//               flexDirection: 'row',
-//               alignItems: 'center',
-//               justifyContent: 'space-between',
-//             }}>
-//             <TextComponent viewStyle={styles.labelStyle}>Gender</TextComponent>
-//             <Pressable
-//               style={{bottom: 4}}
-//               onPress={() => interestedModalRef.current.onOpenModal()}>
-//               <AntDesignIcon name="edit" size={20} color={defaultTheme.brown} />
-//             </Pressable>
-//           </View>
-//           <View style={{flexWrap: 'wrap', flexDirection: 'row', gap: 8}}>
-//             <Chip label={formData?.gender} />
-//           </View>
-//         </CardComponent>
-//         <CardComponent>
-//           <View
-//             style={{
-//               flexDirection: 'row',
-//               alignItems: 'center',
-//               justifyContent: 'space-between',
-//             }}>
-//             <TextComponent viewStyle={styles.labelStyle}>
-//               Orientation
-//             </TextComponent>
-//             <Pressable
-//               style={{bottom: 4}}
-//               onPress={() => interestedModalRef.current.onOpenModal()}>
-//               <AntDesignIcon name="edit" size={20} color={defaultTheme.brown} />
-//             </Pressable>
-//           </View>
-//           <View style={{flexWrap: 'wrap', flexDirection: 'row', gap: 8}}>
-//             <Chip label={formData?.orientation} />
-//           </View>
-//         </CardComponent>
-//       </ScrollView>
-//       {/* <ModalComponent title="Interests" ref={interestedModalRef}>
-//         <FlatList
-//           contentContainerStyle={{paddingBottom: 16}}
-//           data={interestsCategories}
-//           renderItem={({item}) => (
-//             <View style={{marginTop: 16}}>
-//               <Text>Relationship Goals</Text>
-//               <View style={styles.chipContainer}>
-//                 {item?.list?.map(l => (
-//                   <Chip label={l} />
-//                 ))}
-//               </View>
-//             </View>
-//           )}
-//         />
-//         <ButtonComponent buttonText={'Save'} />
-//       </ModalComponent> */}
-//     </>
-//   );
-// };
-
-import React, {useEffect, useState} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  Image,
-  Pressable,
-  ScrollView,
-  Platform,
-} from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import {LinearGradient} from 'expo-linear-gradient';
-import {Header} from '../../components/Header';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import {useGetUserInfo} from '../../api/profile';
-import {TextComponent} from '../../components/TextComponent';
-import {createStyleSheet} from './style';
-import {TextInputComponent} from '../../components/TextInputComponent';
-import {Chip} from '../../components/ChipComponent';
-import {hexToRgbA} from '../../utils/hexToRgba';
-import {defaultTheme} from '../../config/theme';
-import {ButtonComponent} from '../../components/ButtonComponent';
+type ProfileFormState = {
+  name: string;
+  phone_number: string;
+  bio: string;
+  birthday: Date | string | null;
+  photos: string[];
+};
 
 export const ProfileEdit = () => {
-  const [name, setName] = useState('Mark Johnson');
-  const [email, setEmail] = useState('markjohnson@example.com');
-  const [phone, setPhone] = useState('(225) 555-0118');
-  const [dob, setDob] = useState('14/02/2023');
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [address, setAddress] = useState(
-    '1901 Thornridge Cir. Shiloh, Hawaii 81063',
-  );
-
-  const [formData, setFormData] = useState({});
-
-  const style = createStyleSheet();
+  const styles = createStyleSheet();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState<ProfileFormState>({
+    name: "",
+    phone_number: "",
+    bio: "",
+    birthday: null,
+    photos: ["", "", "", ""],
+  });
 
   useEffect(() => {
-    useGetUserInfo().then(res => {
-      console.log('resss', res);
-      setFormData(res?.data?.data);
-    });
+    let isMounted = true;
+
+    useGetUserInfo()
+      .then((res) => {
+        if (!isMounted) {
+          return;
+        }
+
+        const user = res?.data?.data || {};
+        setFormData({
+          name: user?.name || "",
+          phone_number: user?.phone_number || "",
+          bio: user?.bio || "",
+          birthday: user?.birthday || null,
+          photos: [
+            ...(Array.isArray(user?.images) ? user.images : []),
+            ...(Array.isArray(user?.photos) ? user.photos : []),
+            user?.profileImage || user?.profile_image || user?.imageUrl || "",
+          ]
+            .filter(
+              (imageUri, index, self) =>
+                typeof imageUri === "string" &&
+                imageUri.trim().length > 0 &&
+                self.indexOf(imageUri) === index,
+            )
+            .slice(0, 4)
+            .concat(["", "", "", ""])
+            .slice(0, 4),
+        });
+      })
+      .catch((error) => {
+        console.error("Failed to load profile info", error);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
+  const hasLocalUri = (uri: string) =>
+    Boolean(uri) &&
+    !uri.startsWith("http://") &&
+    !uri.startsWith("https://") &&
+    !uri.startsWith("data:");
+
+  const handleUpdateProfile = async () => {
+    if (isSubmitting) {
+      return;
+    }
+
+    if (!formData.name.trim()) {
+      showErrorToast("Please enter your name.", {
+        title: "Name required",
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const uploadedPhotos = await Promise.all(
+        formData.photos.map(async (photoUri) => {
+          if (!photoUri) {
+            return "";
+          }
+
+          if (!hasLocalUri(photoUri)) {
+            return photoUri;
+          }
+
+          return uploadImageToCloudinary(photoUri);
+        }),
+      );
+
+      const finalPhotos = uploadedPhotos.filter(
+        (photoUri) => typeof photoUri === "string" && photoUri.trim().length > 0,
+      );
+
+      const payload = {
+        name: formData.name.trim(),
+        phone_number: formData.phone_number.trim(),
+        bio: formData.bio.trim(),
+        birthday: formData.birthday,
+        profileImage: finalPhotos[0] || "",
+        images: finalPhotos,
+        photos: finalPhotos,
+      };
+
+      await useUpdateUserInfo(payload);
+
+      setFormData((prev) => ({
+        ...prev,
+        photos: finalPhotos.concat(["", "", "", ""]).slice(0, 4),
+      }));
+
+      showSuccessToast("Your profile has been updated.", {
+        title: "Profile saved",
+      });
+    } catch (error: any) {
+      showErrorToast(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Unable to update your profile right now.",
+        {
+          title: "Update failed",
+          duration: 3200,
+        },
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const pickPhoto = async (index: number) => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      showErrorToast("Please allow photo access to update your images.", {
+        title: "Permission needed",
+      });
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [4, 5],
+      quality: 0.85,
+      selectionLimit: 1,
+    });
+
+    if (result.canceled || !result.assets?.[0]?.uri) {
+      return;
+    }
+
+    const nextUri = result.assets[0].uri;
+    setFormData((prev) => {
+      const nextPhotos = [...prev.photos];
+      nextPhotos[index] = nextUri;
+      return { ...prev, photos: nextPhotos };
+    });
+  };
+
+  const removePhoto = (index: number) => {
+    setFormData((prev) => {
+      const nextPhotos = [...prev.photos];
+      nextPhotos[index] = "";
+      return { ...prev, photos: nextPhotos };
+    });
+  };
 
   return (
     <>
-      <Header />
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={{paddingBottom: 40}}>
-        <View style={styles.profileSection}>
-          <View style={styles.avatarContainer}>
-            <Image
-              source={{uri: 'https://randomuser.me/api/portraits/men/32.jpg'}}
-              style={styles.avatar}
+      <View style={styles.screen}>
+        <Header />
+        <KeyboardScreenLayout
+          containerStyle={styles.keyboardLayout}
+          keyboardVerticalOffset={72}
+          contentContainerStyle={styles.content}
+          footerContainerStyle={styles.footer}
+          footer={
+            <ButtonComponent
+              buttonText="Update"
+              viewStyle={styles.updateButton}
+              onPress={handleUpdateProfile}
+              isLoading={isSubmitting}
+              loadingText="Updating..."
+              disabled={isSubmitting}
             />
-            <Pressable style={styles.editIcon}>
-              <Icon name="create" size={14} color="#fff" />
-            </Pressable>
-          </View>
-          <Text style={styles.name}>{name}</Text>
-          <Text style={styles.email}>{email}</Text>
-        </View>
+          }
+        >
+          <View style={styles.formSection}>
+            <View style={styles.photosHeader}>
+              <Text style={styles.photosTitle}>Your photos</Text>
+              <Text style={styles.photosSubtitle}>
+                Add up to 4 photos. Your first one should be your clearest shot.
+              </Text>
+            </View>
 
-        <View style={styles.form}>
-          <View>
+            <View style={styles.photoGrid}>
+              {formData.photos.map((photoUri, index) => {
+                const hasPhoto = Boolean(photoUri);
+
+                return (
+                  <Pressable
+                    key={`profile-photo-slot-${index}`}
+                    onPress={() => pickPhoto(index)}
+                    style={[
+                      styles.photoCard,
+                      hasPhoto ? styles.photoCardFilled : null,
+                    ]}
+                  >
+                    {hasPhoto ? (
+                      <>
+                        <Image
+                          source={{ uri: photoUri }}
+                          style={styles.photoPreview}
+                          contentFit="cover"
+                        />
+                        <Pressable
+                          onPress={() => removePhoto(index)}
+                          style={styles.removePhotoButton}
+                        >
+                          <Text style={styles.removePhotoButtonText}>x</Text>
+                        </Pressable>
+                      </>
+                    ) : (
+                      <View style={styles.photoPlaceholder}>
+                        <View style={styles.photoPlusIconWrap}>
+                          <Text style={styles.photoPlusIcon}>+</Text>
+                        </View>
+                        <Text style={styles.photoPlaceholderTitle}>
+                          {index === 0 ? "Main photo" : `Photo ${index + 1}`}
+                        </Text>
+                        <Text style={styles.photoPlaceholderText}>
+                          Tap to add image
+                        </Text>
+                      </View>
+                    )}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          <View style={styles.formSection}>
             <TextInputComponent
-              labelStyle={style.labelStyle}
-              placeholder="Your Name"
               label="Name"
-              numOfLines={1}
-              value={formData?.name}
-              keyboardType="phone-pad"
-            />
-          </View>
-          <View>
-            <TextInputComponent
-              labelStyle={style.labelStyle}
-              placeholder="Your Phone Number"
-              label="Phone Number"
-              numOfLines={1}
-              value={formData?.phone_number}
-              keyboardType="phone-pad"
-            />
-          </View>
-          <View>
-            <TextInputComponent
-              labelStyle={style.labelStyle}
-              placeholder="About me"
-              label="Bio"
-              numOfLines={5}
-              value={formData?.bio}
-            />
-          </View>
-          <View>
-            <TextComponent viewStyle={style.labelStyle}>Birthday</TextComponent>
-            <Chip
-              label={formData?.birthday}
-              onSelect={() => setShowDatePicker(true)}
-              chipStyle={{
-                paddingTop: 12,
-                paddingBottom: 4,
-                borderColor: hexToRgbA(defaultTheme.brown, 0.3),
-              }}
-              labelStyle={style.labelStyle}
-            />
-          </View>
-          {showDatePicker && (
-            <DateTimePicker
-              mode="date"
-              value={new Date(formData.birthday)}
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(event, date) => {
-                if (date) {
-                  setFormData(prev => ({...prev, birthday: date}));
-                }
-                setShowDatePicker(false);
-              }}
-              maximumDate={new Date()}
-            />
-          )}
-        </View>
-        {showDatePicker && (
-          <DateTimePicker
-            value={new Date()}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={(event, selectedDate) => {
-              setShowDatePicker(false);
-              if (selectedDate) {
-                const formatted = selectedDate.toLocaleDateString('en-GB');
-                setDob(formatted); // e.g. 14/02/2023
+              placeholder="Enter your name"
+              value={formData.name}
+              onChangeText={(value) =>
+                setFormData((prev) => ({ ...prev, name: value }))
               }
-            }}
-          />
-        )}
-      </ScrollView>
-      <ButtonComponent
-        buttonText={'Update'}
-        viewStyle={{position: 'absolute', bottom: 16, left: 16, right: 16}}
-      />
+            />
+
+            <TextInputComponent
+              label="Phone Number"
+              placeholder="Enter your phone number"
+              value={formData.phone_number}
+              onChangeText={(value) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  phone_number: value.replace(/[^\d]/g, "").slice(0, 10),
+                }))
+              }
+              keyboardType="phone-pad"
+              autoComplete="tel"
+            />
+
+            <TextInputComponent
+              label="Bio"
+              placeholder="Tell people about yourself"
+              value={formData.bio}
+              onChangeText={(value) =>
+                setFormData((prev) => ({ ...prev, bio: value }))
+              }
+              multiline
+              numberOfLines={4}
+            />
+
+            <DatePickerField
+              label="Birthday"
+              value={formData.birthday}
+              onChange={(nextDate) =>
+                setFormData((prev) => ({ ...prev, birthday: nextDate }))
+              }
+              maximumDate={new Date()}
+              placeholder="Select your birthday"
+            />
+          </View>
+        </KeyboardScreenLayout>
+      </View>
     </>
   );
 };
-
-// const FormField = ({label, value, onChangeText, iconRight, onPress}) => (
-//   <View style={styles.inputGroup}>
-//     <Text style={styles.label}>{label}</Text>
-//     <Pressable onPress={onPress} style={styles.inputWrapper}>
-//       <TextInput
-//         value={value}
-//         editable={!onPress}
-//         onChangeText={onChangeText}
-//         style={styles.input}
-//         placeholder={label}
-//         placeholderTextColor="#aaa"
-//         pointerEvents={onPress ? 'none' : 'auto'}
-//       />
-//       {iconRight && <View style={styles.iconRight}>{iconRight}</View>}
-//     </Pressable>
-//   </View>
-// );
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    marginBottom: 42,
-  },
-  backButton: {
-    margin: 16,
-  },
-  title: {
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: '500',
-    color: '#000',
-  },
-  profileSection: {
-    alignItems: 'center',
-    marginVertical: 16,
-  },
-  avatarContainer: {
-    position: 'relative',
-  },
-  avatar: {
-    height: 80,
-    width: 80,
-    borderRadius: 40,
-  },
-  editIcon: {
-    position: 'absolute',
-    bottom: 0,
-    right: -4,
-    backgroundColor: '#f74a6e',
-    borderRadius: 12,
-    padding: 4,
-  },
-  name: {
-    marginTop: 10,
-    fontSize: 18,
-    fontWeight: '500',
-    color: '#000',
-  },
-  email: {
-    color: '#999',
-    fontSize: 14,
-  },
-  form: {
-    paddingHorizontal: 20,
-    marginTop: 20,
-    gap: 20,
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    color: '#f74a6e',
-    marginBottom: 4,
-    fontSize: 13,
-  },
-  inputWrapper: {
-    position: 'relative',
-  },
-  input: {
-    borderWidth: 1.5,
-    borderColor: '#f74a6e',
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    fontSize: 15,
-    color: '#000',
-  },
-  iconRight: {
-    position: 'absolute',
-    right: 14,
-    top: '50%',
-    transform: [{translateY: -9}],
-  },
-  saveButton: {
-    marginHorizontal: 20,
-    marginTop: 20,
-    borderRadius: 12,
-  },
-  saveContent: {
-    paddingVertical: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  saveText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-});

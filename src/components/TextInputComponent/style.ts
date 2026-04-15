@@ -1,83 +1,63 @@
-import {Platform, StyleSheet} from 'react-native';
-import {defaultTheme} from '../../config/theme';
-import {hexToRgbA} from '../../utils/hexToRgba';
+import { StyleSheet } from "react-native";
 
 export const createStyleSheet = () => {
   return StyleSheet.create({
-    fieldWrapper: {
-      width: '100%',
+    wrapper: {
+      width: "100%",
     },
-    label: {
-      color: hexToRgbA(defaultTheme.black, 80),
-      fontSize: 13,
-      fontWeight: '500',
-      marginBottom: 8,
-    },
-    labelError: {
-      color: '#ef4444',
-    },
-    requiredMark: {
-      color: '#ef4444',
-    },
-    inputContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      minHeight: 52,
-      borderWidth: 1,
+
+    inputCard: {
+      backgroundColor: "#f3f3f7", // same as phoneCard
       borderRadius: 14,
-      borderColor: hexToRgbA(defaultTheme.black, 14),
-      backgroundColor: '#fff',
       paddingHorizontal: 14,
-      ...(Platform.OS === 'web'
-        ? ({
-            transitionProperty: 'border-color',
-            transitionDuration: '160ms',
-            transitionTimingFunction: 'ease',
-          } as object)
-        : null),
-    },
-    inputContainerFocused: {
-      ...(Platform.OS === 'web'
-        ? ({
-            borderColor: hexToRgbA(defaultTheme.black, 14),
-          } as object)
-        : {
-            borderColor: defaultTheme.orange,
-          }),
-    },
-    inputContainerError: {
-      borderColor: '#ef4444',
-    },
-    iconStyle: {
-      color: hexToRgbA(defaultTheme.black, 35),
-      marginRight: 8,
-    },
-    textInput: {
-      fontSize: 15,
-      color: defaultTheme.brown,
-      flex: 1,
-      paddingVertical: 14,
-      ...(Platform.OS === 'web'
-        ? ({
-            outlineStyle: 'none',
-            outlineWidth: 0,
-            outlineColor: 'transparent',
-            boxShadow: 'none',
-            appearance: 'none',
-            WebkitAppearance: 'none',
-          } as object)
-        : null),
-    },
-    textInputMultiline: {
-      minHeight: 108,
-      textAlignVertical: 'top',
       paddingVertical: 12,
+      justifyContent: "flex-start",
     },
+
+    inputFocused: {
+      backgroundColor: "#ececf2", // subtle focus like OTP
+    },
+
+    inputError: {
+      borderWidth: 1,
+      borderColor: "#ef4444",
+    },
+
+    label: {
+      color: "#222222",
+      fontSize: 12,
+      lineHeight: 14,
+      fontWeight: "500",
+      marginBottom: 6,
+    },
+
+    labelError: {
+      color: "#b91c1c",
+    },
+
+    requiredMark: {
+      color: "#b91c1c",
+    },
+
+    input: {
+      color: "#1f1f1f",
+      fontSize: 32 / 1.5, // same as phoneInput
+      lineHeight: 32 / 1.5,
+      fontWeight: "500",
+      height: 42 / 1.5,
+      paddingVertical: 0,
+      paddingHorizontal: 0,
+      margin: 0,
+      textAlignVertical: "center",
+      includeFontPadding: false,
+    },
+
     errorText: {
-      marginTop: 6,
-      color: '#ef4444',
+      marginTop: 4,
+      color: "#b91c1c",
       fontSize: 12,
       lineHeight: 16,
+      fontWeight: "500",
     },
   });
 };

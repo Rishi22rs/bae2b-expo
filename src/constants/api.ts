@@ -1,10 +1,13 @@
 // export const baseURL = `http://192.168.1.57:3000/api`;
 // export const baseURL = `http://192.168.1.51:3000/api`;
 // export const baseURL = `http://10.101.205.251:3000/api`;
-export const baseURL = `http://192.168.1.24:3000/api`;
-export const baseURLSocket = `http://192.168.1.24:3000`;
+export const baseURL = `http://192.168.0.109:3000/api`;
+export const baseURLSocket = `http://192.168.0.109:3000`;
 export const webBaseURL = `http://localhost:3000/api`;
 export const webBaseURLSocket = `http://localhost:3000`;
+export const cloudinaryCloudName = "ddqpb4axc";
+export const cloudinaryUploadPreset = "bae2b_preset";
+export const cloudinaryApiKey = "VTxtl8-btZlf3qZ7-GTCZ2fEGrs";
 // export const baseURL = `http://10.101.207.83:3000/api`;
 // export const baseURLSocket = `http://10.101.207.83:3000`;
 // export const baseURL = `https://da-one-be.onrender.com/api`;

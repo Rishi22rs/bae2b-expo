@@ -1,13 +1,22 @@
-import {useEffect} from 'react';
-import {Alert, Text} from 'react-native';
-import {useCurrentStep} from '../../api/auth';
-import {useNavigation} from '@react-navigation/native';
-import {navigationConstants} from '../../constants/app-navigation';
-import {useGetAlerts, useMarkAlertAsRead} from '../../api/app';
+import { useNavigation } from "@react-navigation/native";
+import { useEffect, useRef } from "react";
+import { Text } from "react-native";
+import { useCurrentStep } from "../../api/auth";
+import { navigationConstants } from "../../constants/app-navigation";
 
 export const Stepper = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
+  const hasResolvedStepRef = useRef(false);
+
   useEffect(() => {
+    if (hasResolvedStepRef.current) {
+      return;
+    }
+
+    hasResolvedStepRef.current = true;
+
+    let isMounted = true;
+
     // useGetAlerts().then(res => {
     //   !!res?.data?.length
     //     ? Alert.alert(
@@ -52,18 +61,30 @@ export const Stepper = () => {
     //         );
     // });
     useCurrentStep()
-      .then(res => {
+      .then((res) => {
+        if (!isMounted) {
+          return;
+        }
+
         navigation.replace(res?.data?.routeName, {
           screen: res?.data?.route,
           params: {},
         });
       })
-      .catch(() =>
+      .catch(() => {
+        if (!isMounted) {
+          return;
+        }
+
         navigation.replace(navigationConstants.LOGIN_ROUTE, {
           screen: navigationConstants.LOGIN,
           params: {},
-        }),
-      );
-  }, []);
+        });
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [navigation]);
   return <Text>Stepper</Text>;
 };
