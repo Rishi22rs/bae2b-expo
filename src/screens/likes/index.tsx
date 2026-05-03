@@ -1,23 +1,23 @@
-import React, {useCallback, useEffect, useState} from 'react';
-import {useNavigation} from '@react-navigation/native';
-import {Pressable, Text, View} from 'react-native';
-import {useGetLikesReceived} from '../../api/match';
-import {Header} from '../../components/Header';
+import { useNavigation } from "@react-navigation/native";
+import React, { useCallback, useEffect, useState } from "react";
+import { Pressable, Text, View } from "react-native";
+import { useGetLikesReceived } from "../../api/match";
+import { Header } from "../../components/Header";
 import {
   LikedUserCard,
   LikedUserCardProps,
-} from '../../components/LikedUserCard/index';
-import Loader from '../../components/Loader';
-import {TwoColumnCardGrid} from '../../components/TwoColumnCardGrid/index';
-import {navigationConstants} from '../../constants/app-navigation';
-import {createStyleSheet} from './style';
+} from "../../components/LikedUserCard/index";
+import Loader from "../../components/Loader";
+import { TwoColumnCardGrid } from "../../components/TwoColumnCardGrid/index";
+import { navigationConstants } from "../../constants/app-navigation";
+import { createStyleSheet } from "./style";
 
 interface ProfileListItem {
   value?: string;
 }
 
 export interface ProfileSection {
-  type: 'BIG_TEXT' | 'SMALL_TEXT' | 'SMALL_TEXT_LIST';
+  type: "BIG_TEXT" | "SMALL_TEXT" | "SMALL_TEXT_LIST";
   title: string;
   content: string | Array<ProfileListItem | string>;
 }
@@ -49,7 +49,7 @@ const parseNameAgeFromHeadline = (headline?: string) => {
     return {};
   }
 
-  const [namePart, agePart] = headline.split(',').map(part => part?.trim());
+  const [namePart, agePart] = headline.split(",").map((part) => part?.trim());
   const parsedAge = Number(agePart);
 
   return {
@@ -81,7 +81,7 @@ const getAgeFromBirthday = (birthday?: string) => {
 };
 
 const parseAgeValue = (value: unknown) => {
-  if (value === undefined || value === null || value === '') {
+  if (value === undefined || value === null || value === "") {
     return undefined;
   }
 
@@ -99,13 +99,13 @@ const toSectionListItems = (value: unknown): ProfileListItem[] => {
   }
 
   return value
-    .map(item => {
-      if (typeof item === 'string') {
-        return {value: item};
+    .map((item) => {
+      if (typeof item === "string") {
+        return { value: item };
       }
 
-      if (item && typeof item === 'object' && 'value' in item) {
-        return {value: (item as {value?: string})?.value || ''};
+      if (item && typeof item === "object" && "value" in item) {
+        return { value: (item as { value?: string })?.value || "" };
       }
 
       return null;
@@ -119,15 +119,15 @@ const buildSegregatedList = (user: LikedUserItem) => {
   }
 
   const sections: ProfileSection[] = [];
-  const headline = `${user?.name || 'Profile'}${
-    typeof user?.age === 'number' ? `, ${user.age}` : ''
+  const headline = `${user?.name || "Profile"}${
+    typeof user?.age === "number" ? `, ${user.age}` : ""
   }`;
-  sections.push({type: 'BIG_TEXT', title: 'About Me', content: headline});
+  sections.push({ type: "BIG_TEXT", title: "About Me", content: headline });
 
   if (user?.location) {
     sections.push({
-      type: 'SMALL_TEXT',
-      title: 'Location',
+      type: "SMALL_TEXT",
+      title: "Location",
       content: user.location,
     });
   }
@@ -155,8 +155,8 @@ const normalizeLikesResponseItem = (
     (item?.segregatedList as ProfileSection[]) ||
     (item?.segregated_list as ProfileSection[]);
 
-  const composedName = `${(nestedUser?.first_name as string) || ''} ${
-    (nestedUser?.last_name as string) || ''
+  const composedName = `${(nestedUser?.first_name as string) || ""} ${
+    (nestedUser?.last_name as string) || ""
   }`.trim();
   const fullName =
     (nestedUser?.name as string) ||
@@ -170,13 +170,11 @@ const normalizeLikesResponseItem = (
 
   const interestsFromInterests = toSectionListItems(nestedUser?.interests);
   const interestsFromHobbies = toSectionListItems(nestedUser?.hobbies);
-  const interestsFromPassions = String(
-    (nestedUser?.passions as string) || '',
-  )
-    .split(',')
-    .map(item => item?.trim())
+  const interestsFromPassions = String((nestedUser?.passions as string) || "")
+    .split(",")
+    .map((item) => item?.trim())
     .filter(Boolean)
-    .map(value => ({value}));
+    .map((value) => ({ value }));
   const interests =
     interestsFromInterests?.length > 0
       ? interestsFromInterests
@@ -225,41 +223,41 @@ const normalizeLikesResponseItem = (
     photos: Array.isArray(nestedUser?.photos)
       ? (nestedUser.photos as string[])
       : undefined,
-    badgeText: 'Liked You',
+    badgeText: "Liked You",
     segregatedList: Array.isArray(possibleList) ? possibleList : undefined,
   };
 
   if (!candidateUser?.segregatedList?.length) {
     const autoSections = buildSegregatedList(candidateUser);
 
-    if ((candidateUser?.gender || '').trim()) {
+    if ((candidateUser?.gender || "").trim()) {
       autoSections.push({
-        type: 'SMALL_TEXT',
-        title: 'Gender',
-        content: candidateUser.gender || '',
+        type: "SMALL_TEXT",
+        title: "Gender",
+        content: candidateUser.gender || "",
       });
     }
 
-    if ((candidateUser?.orientation || '').trim()) {
+    if ((candidateUser?.orientation || "").trim()) {
       autoSections.push({
-        type: 'SMALL_TEXT',
-        title: 'Orientation',
-        content: candidateUser.orientation || '',
+        type: "SMALL_TEXT",
+        title: "Orientation",
+        content: candidateUser.orientation || "",
       });
     }
 
     if ((nestedUser?.bio as string)?.trim()) {
       autoSections.push({
-        type: 'SMALL_TEXT',
-        title: 'Bio',
+        type: "SMALL_TEXT",
+        title: "Bio",
         content: (nestedUser?.bio as string).trim(),
       });
     }
 
     if (interests?.length) {
       autoSections.push({
-        type: 'SMALL_TEXT_LIST',
-        title: 'Interests',
+        type: "SMALL_TEXT_LIST",
+        title: "Interests",
         content: interests,
       });
     }
@@ -272,21 +270,21 @@ const normalizeLikesResponseItem = (
 
 const resolveCardDisplayData = (item: LikedUserItem) => {
   const headline = item?.segregatedList?.find(
-    section => section?.type === 'BIG_TEXT',
+    (section) => section?.type === "BIG_TEXT",
   )?.content;
   const parsed = parseNameAgeFromHeadline(
-    typeof headline === 'string' ? headline : undefined,
+    typeof headline === "string" ? headline : undefined,
   );
 
   const locationSection = item?.segregatedList?.find(
-    section =>
-      section?.type === 'SMALL_TEXT' &&
-      section?.title?.toLowerCase()?.includes('location'),
+    (section) =>
+      section?.type === "SMALL_TEXT" &&
+      section?.title?.toLowerCase()?.includes("location"),
   );
 
   const resolvedLocation =
     item?.location ||
-    (typeof locationSection?.content === 'string'
+    (typeof locationSection?.content === "string"
       ? locationSection.content
       : undefined);
 
@@ -304,17 +302,17 @@ const resolveCardDisplayData = (item: LikedUserItem) => {
   };
 };
 
-export const Likes = ({route}: LikesScreenProps) => {
+export const Likes = ({ route }: LikesScreenProps) => {
   const styles = createStyleSheet();
   const navigation = useNavigation();
   const routeUsers = route?.params?.users || [];
   const hasRouteUsers = routeUsers?.length > 0;
   const [users, setUsers] = useState<LikedUserItem[]>(routeUsers);
   const [isLoading, setIsLoading] = useState<boolean>(!hasRouteUsers);
-  const [fetchError, setFetchError] = useState<string>('');
-  const title = route?.params?.title ?? 'Liked You';
+  const [fetchError, setFetchError] = useState<string>("");
+  const title = route?.params?.title ?? "Liked You";
   const subtitle =
-    route?.params?.subtitle ?? 'People who showed interest in your profile.';
+    route?.params?.subtitle ?? "People who showed interest in your profile.";
 
   const fetchLikesUsers = useCallback(async () => {
     if (hasRouteUsers) {
@@ -322,38 +320,22 @@ export const Likes = ({route}: LikesScreenProps) => {
     }
 
     setIsLoading(true);
-    setFetchError('');
-
+    setFetchError("");
     try {
       const response = await useGetLikesReceived();
       const responseData = response?.data;
-      const likesList = Array.isArray(responseData)
-        ? responseData
-        : Array.isArray(responseData?.data)
-          ? responseData.data
-          : Array.isArray(responseData?.users)
-            ? responseData.users
-            : Array.isArray(responseData?.data?.users)
-              ? responseData.data.users
-          : Array.isArray(responseData?.likesReceived)
-            ? responseData.likesReceived
-            : Array.isArray(responseData?.likes_received)
-              ? responseData.likes_received
-              : Array.isArray(responseData?.results)
-                ? responseData.results
-                : [];
-
-      const normalized = likesList
-        .filter(item => item && typeof item === 'object')
-        .map((item, index) =>
-          normalizeLikesResponseItem(item as Record<string, unknown>, index),
-        );
-
-      setUsers(normalized);
+      console.log("responseData?.users", responseData?.users);
+      const likesList = responseData?.users;
+      console.log({ likesList });
+      // const normalized = likesList.map((item, index) =>
+      //   normalizeLikesResponseItem(item as Record<string, unknown>, index),
+      // );
+      console.log({ likesList });
+      setUsers(likesList);
     } catch (error) {
-      console.error('getLikesReceived error:', error);
+      console.error("getLikesReceived error:", error);
       setUsers([]);
-      setFetchError('Unable to load likes right now. Please try again.');
+      setFetchError("rUnable to load likes right now. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -362,7 +344,7 @@ export const Likes = ({route}: LikesScreenProps) => {
   useEffect(() => {
     fetchLikesUsers();
   }, [fetchLikesUsers]);
-
+  console.log({ fetchError });
   return (
     <View style={styles.container}>
       <Header prefixTitle="People Who" title={title} />
@@ -383,9 +365,9 @@ export const Likes = ({route}: LikesScreenProps) => {
         ) : (
           <TwoColumnCardGrid
             data={users}
-            keyExtractor={item => item.id}
+            keyExtractor={(item) => item.id}
             emptyMessage="No likes yet. Check back soon."
-            renderCard={item => {
+            renderCard={(item) => {
               const displayData = resolveCardDisplayData(item);
 
               return (
@@ -398,7 +380,8 @@ export const Likes = ({route}: LikesScreenProps) => {
                   onPress={
                     item.onPress ||
                     (() => {
-                      const {onPress: _ignoreOnPress, ...userForProfile} = item;
+                      const { onPress: _ignoreOnPress, ...userForProfile } =
+                        item;
                       navigation.navigate(navigationConstants.LIKES_PROFILE, {
                         user: userForProfile,
                       });

@@ -1,7 +1,14 @@
 import {Text, View} from 'react-native';
 import {createStyleSheet} from '../style';
 
-export const LineItems = ({title = '', content = []}) => {
+type LineItem = string | {value?: string};
+
+type LineItemsProps = {
+  title?: string;
+  content?: LineItem[];
+};
+
+export const LineItems = ({title = '', content = []}: LineItemsProps) => {
   const styles = createStyleSheet();
 
   const resolveItemLabel = (item: unknown) => {

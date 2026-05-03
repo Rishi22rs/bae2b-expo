@@ -14,6 +14,12 @@ export const createStyleSheet = () => {
       justifyContent: "flex-start",
     },
 
+    textAreaCard: {
+      minHeight: 156,
+      paddingTop: 14,
+      paddingBottom: 14,
+    },
+
     inputFocused: {
       backgroundColor: "#ececf2", // subtle focus like OTP
     },
@@ -50,6 +56,22 @@ export const createStyleSheet = () => {
       margin: 0,
       textAlignVertical: "center",
       includeFontPadding: false,
+    },
+
+    inputDisabled: {
+      color: "#77777f",
+    },
+
+    textAreaInput: {
+      minHeight: 112,
+      height: 112,
+      fontSize: 16,
+      lineHeight: 24,
+      fontWeight: "400",
+      paddingTop: 2,
+      paddingBottom: 2,
+      textAlignVertical: "top",
+      includeFontPadding: true,
     },
 
     errorText: {

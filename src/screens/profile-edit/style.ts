@@ -116,5 +116,8 @@ export const createStyleSheet = () => {
     updateButton: {
       width: "100%",
     },
+    scrollContentContainer: {
+      paddingBottom: 160,
+    },
   });
 };

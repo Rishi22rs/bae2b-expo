@@ -1,9 +1,13 @@
-import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { uploadImageToCloudinary } from "../../api/onboarding";
-import { useGetUserInfo, useUpdateUserInfo } from "../../api/profile";
+import {
+  extractUserInfoData,
+  useGetUserInfo,
+  useUpdateUserInfo,
+} from "../../api/profile";
 import { ButtonComponent } from "../../components/ButtonComponent";
 import { DatePickerField } from "../../components/DatePickerField";
 import { Header } from "../../components/Header";
@@ -20,9 +24,25 @@ type ProfileFormState = {
   photos: string[];
 };
 
+const normalizePhotoList = (user: Record<string, any>) =>
+  [
+    ...(Array.isArray(user?.images) ? user.images : []),
+    ...(Array.isArray(user?.photos) ? user.photos : []),
+    user?.profileImage || user?.profile_image || user?.imageUrl || "",
+  ]
+    .filter(
+      (imageUri, index, self) =>
+        typeof imageUri === "string" &&
+        imageUri.trim().length > 0 &&
+        self.indexOf(imageUri) === index,
+    )
+    .slice(0, 4);
+
 export const ProfileEdit = () => {
   const styles = createStyleSheet();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [initialUser, setInitialUser] = useState<Record<string, any>>({});
+  const [initialRemotePhotos, setInitialRemotePhotos] = useState<string[]>([]);
   const [formData, setFormData] = useState<ProfileFormState>({
     name: "",
     phone_number: "",
@@ -40,26 +60,16 @@ export const ProfileEdit = () => {
           return;
         }
 
-        const user = res?.data?.data || {};
+        const user = extractUserInfoData(res);
+        const normalizedPhotos = normalizePhotoList(user);
+        setInitialUser(user);
+        setInitialRemotePhotos(normalizedPhotos);
         setFormData({
           name: user?.name || "",
           phone_number: user?.phone_number || "",
           bio: user?.bio || "",
           birthday: user?.birthday || null,
-          photos: [
-            ...(Array.isArray(user?.images) ? user.images : []),
-            ...(Array.isArray(user?.photos) ? user.photos : []),
-            user?.profileImage || user?.profile_image || user?.imageUrl || "",
-          ]
-            .filter(
-              (imageUri, index, self) =>
-                typeof imageUri === "string" &&
-                imageUri.trim().length > 0 &&
-                self.indexOf(imageUri) === index,
-            )
-            .slice(0, 4)
-            .concat(["", "", "", ""])
-            .slice(0, 4),
+          photos: normalizedPhotos.concat(["", "", "", ""]).slice(0, 4),
         });
       })
       .catch((error) => {
@@ -107,21 +117,58 @@ export const ProfileEdit = () => {
       );
 
       const finalPhotos = uploadedPhotos.filter(
-        (photoUri) => typeof photoUri === "string" && photoUri.trim().length > 0,
+        (photoUri) =>
+          typeof photoUri === "string" && photoUri.trim().length > 0,
       );
 
-      const payload = {
-        name: formData.name.trim(),
-        phone_number: formData.phone_number.trim(),
-        bio: formData.bio.trim(),
-        birthday: formData.birthday,
-        profileImage: finalPhotos[0] || "",
-        images: finalPhotos,
-        photos: finalPhotos,
-      };
+      const imagesToAdd = finalPhotos.filter(
+        (photoUri) => !initialRemotePhotos.includes(photoUri),
+      );
+      const imagesToRemove = initialRemotePhotos.filter(
+        (photoUri) => !finalPhotos.includes(photoUri),
+      );
+
+      const payload: Record<string, any> = {};
+
+      if (formData.name.trim() !== (initialUser?.name || "")) {
+        payload.name = formData.name.trim();
+      }
+
+      if ((formData.bio || "") !== (initialUser?.bio || "")) {
+        payload.bio = formData.bio.trim();
+      }
+
+      const initialBirthday = initialUser?.birthday || null;
+      if ((formData.birthday || null) !== initialBirthday) {
+        payload.birthday = formData.birthday;
+      }
+
+      if (imagesToAdd.length > 0) {
+        payload.images_to_add = imagesToAdd;
+      }
+
+      if (imagesToRemove.length > 0) {
+        payload.images_to_remove = imagesToRemove;
+      }
+
+      if (Object.keys(payload).length === 0) {
+        showErrorToast("Make a change before updating your profile.", {
+          title: "No changes found",
+        });
+        setIsSubmitting(false);
+        return;
+      }
 
       await useUpdateUserInfo(payload);
 
+      setInitialUser((prev) => ({
+        ...prev,
+        name: formData.name.trim(),
+        bio: formData.bio.trim(),
+        birthday: formData.birthday,
+        images: finalPhotos,
+      }));
+      setInitialRemotePhotos(finalPhotos);
       setFormData((prev) => ({
         ...prev,
         photos: finalPhotos.concat(["", "", "", ""]).slice(0, 4),
@@ -191,6 +238,7 @@ export const ProfileEdit = () => {
           keyboardVerticalOffset={72}
           contentContainerStyle={styles.content}
           footerContainerStyle={styles.footer}
+          scrollContentContainerStyle={styles.scrollContentContainer}
           footer={
             <ButtonComponent
               buttonText="Update"
@@ -278,6 +326,7 @@ export const ProfileEdit = () => {
               }
               keyboardType="phone-pad"
               autoComplete="tel"
+              disabled
             />
 
             <TextInputComponent
@@ -287,6 +336,7 @@ export const ProfileEdit = () => {
               onChangeText={(value) =>
                 setFormData((prev) => ({ ...prev, bio: value }))
               }
+              textArea
               multiline
               numberOfLines={4}
             />
@@ -294,11 +344,9 @@ export const ProfileEdit = () => {
             <DatePickerField
               label="Birthday"
               value={formData.birthday}
-              onChange={(nextDate) =>
-                setFormData((prev) => ({ ...prev, birthday: nextDate }))
-              }
               maximumDate={new Date()}
               placeholder="Select your birthday"
+              disabled
             />
           </View>
         </KeyboardScreenLayout>

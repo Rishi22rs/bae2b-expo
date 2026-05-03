@@ -11,7 +11,7 @@ export const LikesRoute = () => {
       screenOptions={{
         headerShown: false,
       }}>
-      <LikesStack.Screen name={navigationConstants.LIKES} component={Likes} />
+      <LikesStack.Screen name="likes-screen" component={Likes} />
       <LikesStack.Screen
         name={navigationConstants.LIKES_PROFILE}
         component={LikesProfile}

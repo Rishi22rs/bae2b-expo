@@ -18,6 +18,10 @@ export const createStyleSheet = () => {
       backgroundColor: "#ececf2",
     },
 
+    inputDisabled: {
+      opacity: 0.72,
+    },
+
     inputError: {
       borderWidth: 1,
       borderColor: "#ef4444",

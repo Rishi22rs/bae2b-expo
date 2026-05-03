@@ -15,24 +15,28 @@ interface TextInputComponentProps extends TextInputProps {
   viewStyle?: StyleProp<ViewStyle>;
   inputStyle?: StyleProp<TextStyle>;
   inputContainerStyle?: StyleProp<ViewStyle>;
+  textArea?: boolean;
   label?: string;
   labelStyle?: StyleProp<TextStyle>;
   error?: string;
   errorStyle?: StyleProp<TextStyle>;
   isError?: boolean;
   required?: boolean;
+  disabled?: boolean;
 }
 
 export const TextInputComponent = ({
   viewStyle,
   inputStyle,
   inputContainerStyle,
+  textArea,
   label,
   labelStyle,
   error,
   errorStyle,
   isError = false,
   required = false,
+  disabled = false,
   onFocus,
   onBlur,
   ...props
@@ -41,12 +45,14 @@ export const TextInputComponent = ({
   const [isFocused, setIsFocused] = useState(false);
 
   const hasError = Boolean(error) || isError;
+  const isTextArea = Boolean(textArea || props.multiline);
 
   return (
     <View style={style.wrapper}>
       <View
         style={[
           style.inputCard,
+          isTextArea && style.textAreaCard,
           viewStyle,
           inputContainerStyle,
           isFocused && !hasError && style.inputFocused,
@@ -63,8 +69,12 @@ export const TextInputComponent = ({
 
         <TextInput
           {...props}
+          multiline={isTextArea}
+          scrollEnabled={!isTextArea}
           style={[
             style.input,
+            isTextArea && style.textAreaInput,
+            disabled && style.inputDisabled,
             Platform.OS === "web"
               ? ({
                   outlineStyle: "none",
@@ -75,6 +85,7 @@ export const TextInputComponent = ({
               : null,
             inputStyle,
           ]}
+          editable={!disabled}
           onFocus={(e) => {
             setIsFocused(true);
             onFocus?.(e);

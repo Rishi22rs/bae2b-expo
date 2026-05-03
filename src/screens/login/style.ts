@@ -1,3 +1,4 @@
+import { hexToRgbA } from "@/utils/hexToRgba";
 import { Platform, StyleSheet } from "react-native";
 import { defaultTheme } from "../../config/theme";
 
@@ -294,7 +295,7 @@ export const createStyleSheet = () => {
       ...(Platform.OS === "web" ? ({ cursor: "pointer" } as object) : null),
     },
     resendText: {
-      color: "#7c7c83",
+      color: defaultTheme.primary,
       fontSize: 26 / 1.5,
       lineHeight: 26 / 1.5,
       textDecorationLine: "underline",
@@ -314,7 +315,7 @@ export const createStyleSheet = () => {
     authInfoText: {
       marginTop: 2,
       marginBottom: 6,
-      color: defaultTheme.mutedText,
+      color: hexToRgbA(defaultTheme.primary, 60),
       fontSize: 12,
       lineHeight: 16,
       fontWeight: "500",

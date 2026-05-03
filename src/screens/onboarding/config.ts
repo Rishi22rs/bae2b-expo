@@ -1,5 +1,6 @@
 export type OnboardingStepId =
   | "name"
+  | "bio"
   | "birthday"
   | "gender"
   | "orientation"
@@ -19,6 +20,14 @@ interface NameStepConfig extends OnboardingStepBase {
   fieldLabel: string;
   placeholder: string;
   required: boolean;
+}
+
+interface BioStepConfig extends OnboardingStepBase {
+  id: "bio";
+  fieldLabel: string;
+  placeholder: string;
+  required: boolean;
+  maxLength: number;
 }
 
 interface BirthdayStepConfig extends OnboardingStepBase {
@@ -42,6 +51,7 @@ interface PhotosStepConfig extends OnboardingStepBase {
 
 export type OnboardingStepConfig =
   | NameStepConfig
+  | BioStepConfig
   | BirthdayStepConfig
   | SelectionStepConfig
   | PhotosStepConfig;
@@ -61,6 +71,7 @@ export const onboardingConfig = {
   },
   validation: {
     nameRequired: "Please enter your first name.",
+    bioRequired: "Please add a short bio.",
     birthdayRequired: "Please select your birthday.",
     birthdayMinimumAge: (minAge: number) =>
       `You must be at least ${minAge} years old.`,
@@ -78,6 +89,15 @@ export const onboardingConfig = {
       fieldLabel: "First Name",
       placeholder: "First name",
       required: true,
+    },
+    {
+      id: "bio",
+      title: "Write a tiny intro",
+      subtitle: "A few honest words make your profile feel more real.",
+      fieldLabel: "Bio",
+      placeholder: "Something people should know about you",
+      required: true,
+      maxLength: 180,
     },
     {
       id: "birthday",

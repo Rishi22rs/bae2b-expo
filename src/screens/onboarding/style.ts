@@ -95,6 +95,18 @@ export const createStyleSheet = () =>
     fieldBlock: {
       gap: 12,
     },
+    bioInput: {
+      minHeight: 132,
+      alignItems: "flex-start",
+    },
+    characterCount: {
+      alignSelf: "flex-end",
+      marginTop: -4,
+      color: hexToRgbA(defaultTheme.primary, 55),
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: "500",
+    },
     datePickerTrigger: {
       position: "relative",
       borderRadius: 14,
@@ -128,6 +140,18 @@ export const createStyleSheet = () =>
       flexWrap: "wrap",
       flexDirection: "row",
       gap: 10,
+    },
+    optionsHelperText: {
+      fontSize: 12,
+      lineHeight: 16,
+      color: hexToRgbA(defaultTheme.primary, 60),
+      fontWeight: "500",
+    },
+    optionsErrorText: {
+      fontSize: 12,
+      lineHeight: 16,
+      color: "#b91c1c",
+      fontWeight: "500",
     },
     photoGrid: {
       flexDirection: "row",

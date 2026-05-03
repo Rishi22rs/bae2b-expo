@@ -1,17 +1,21 @@
+import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
 import * as React from "react";
-import { LogBox, Platform, StyleSheet, Text, TextInput, View } from "react-native";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import {
-  Montserrat_400Regular,
-  Montserrat_500Medium,
-  useFonts,
-} from "@expo-google-fonts/montserrat";
-import { AppNavigation } from "./src/config/app-navigation/index";
+  LogBox,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { ToastHost } from "./src/components/Toast";
+import { AppNavigation } from "./src/config/app-navigation/index";
 
 const WEB_MAX_WIDTH = 480;
-const APP_FONT_FAMILY = Platform.OS === "web" ? "Montserrat, sans-serif" : "Montserrat_400Regular";
+const APP_FONT_FAMILY =
+  Platform.OS === "web" ? "Montserrat, sans-serif" : "Montserrat_400Regular";
 const WEB_INPUT_RESET_STYLE =
   Platform.OS === "web"
     ? ({
@@ -32,8 +36,12 @@ const applyGlobalAppFont = () => {
     return;
   }
 
-  const TextComponent = Text as unknown as { defaultProps?: Record<string, any> };
-  const InputComponent = TextInput as unknown as { defaultProps?: Record<string, any> };
+  const TextComponent = Text as unknown as {
+    defaultProps?: Record<string, any>;
+  };
+  const InputComponent = TextInput as unknown as {
+    defaultProps?: Record<string, any>;
+  };
 
   const textDefaults = TextComponent.defaultProps || {};
   const textStyle = toStyleArray(textDefaults.style);
@@ -46,17 +54,28 @@ const applyGlobalAppFont = () => {
   const inputStyle = toStyleArray(inputDefaults.style);
   InputComponent.defaultProps = {
     ...inputDefaults,
-    style: [{ fontFamily: APP_FONT_FAMILY }, WEB_INPUT_RESET_STYLE, ...inputStyle],
+    style: [
+      { fontFamily: APP_FONT_FAMILY },
+      WEB_INPUT_RESET_STYLE,
+      ...inputStyle,
+    ],
   };
 
   hasAppliedGlobalFont = true;
 };
 
 function App() {
-  const [fontsLoaded] = useFonts({
-    Montserrat_400Regular,
-    Montserrat_500Medium,
-  });
+  let fontsLoaded = true;
+
+  // Only load fonts on native (Android/iOS)
+  if (Platform.OS !== "web") {
+    const [loaded] = useFonts({
+      Montserrat_400Regular: require("./assets/fonts/Montserrat-Regular.ttf"),
+      Montserrat_500Medium: require("./assets/fonts/Montserrat-Medium.ttf"),
+    });
+
+    fontsLoaded = loaded;
+  }
 
   if (__DEV__) {
     import("./src/reactotron-config");

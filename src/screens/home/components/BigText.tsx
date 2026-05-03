@@ -1,7 +1,12 @@
 import {Text, View} from 'react-native';
 import {createStyleSheet} from '../style';
 
-export const BigText = ({title = '', content = ''}) => {
+type BigTextProps = {
+  title?: string;
+  content?: string;
+};
+
+export const BigText = ({title = '', content = ''}: BigTextProps) => {
   const styles = createStyleSheet();
   return (
     <View style={styles.sectionCard}>

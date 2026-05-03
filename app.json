@@ -44,5 +44,6 @@
         "projectId": "74df8c0d-2bb2-4d77-ae3c-8a4d94d8c008"
       }
     }
-  }
+  },
+  "assetBundlePatterns": ["**/*"]
 }

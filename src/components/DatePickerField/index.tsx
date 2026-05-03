@@ -253,6 +253,7 @@ export const DatePickerField = ({
         }}
         style={[
           style.inputCard,
+          disabled && style.inputDisabled,
           fieldStyle,
           isFocused && !hasError && style.inputFocused,
           hasError && style.inputError,

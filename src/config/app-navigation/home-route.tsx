@@ -13,7 +13,7 @@ export const HomeRoute = () => {
         gestureDirection: "vertical",
       }}
     >
-      <HomeStack.Screen name={navigationConstants.HOME} component={Home} />
+      <HomeStack.Screen name="home-screen" component={Home} />
     </HomeStack.Navigator>
   );
 };

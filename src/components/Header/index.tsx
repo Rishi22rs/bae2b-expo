@@ -1,9 +1,10 @@
-import {useNavigation} from '@react-navigation/native';
-import {Pressable, View} from 'react-native';
-import FeatherIcons from 'react-native-vector-icons/Feather';
-import IonIcons from 'react-native-vector-icons/Ionicons';
-import {TextComponent} from '../TextComponent';
-import {createStyleSheet} from './style';
+import { defaultTheme } from "@/config/theme/default";
+import { useNavigation } from "@react-navigation/native";
+import { Pressable, View } from "react-native";
+import FeatherIcons from "react-native-vector-icons/Feather";
+import IonIcons from "react-native-vector-icons/Ionicons";
+import { TextComponent } from "../TextComponent";
+import { createStyleSheet } from "./style";
 
 interface HeaderProps {
   prefixTitle?: string;
@@ -15,8 +16,8 @@ interface HeaderProps {
 }
 
 export const Header = ({
-  prefixTitle = 'Explore',
-  title = 'OnlyOne',
+  prefixTitle = "Explore",
+  title = "OnlyOne",
   showRightComponent = false,
   onRightComponentClick,
   showBack = false,
@@ -33,7 +34,7 @@ export const Header = ({
               style={style.backIcon}
               name="arrow-left"
               size={25}
-              color="#176FF2"
+              color={defaultTheme.primary}
             />
           </Pressable>
         ) : null}

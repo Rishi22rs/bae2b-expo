@@ -1,7 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import Animated, {
   FadeIn,
@@ -13,7 +13,11 @@ import Animated, {
   ZoomIn,
 } from "react-native-reanimated";
 import Icon from "react-native-vector-icons/Ionicons";
-import { uploadImageToCloudinary, useAddUserInfo } from "../../api/onboarding";
+import {
+  getOnboardingOptions,
+  uploadImageToCloudinary,
+  useAddUserInfo,
+} from "../../api/onboarding";
 import { ButtonComponent } from "../../components/ButtonComponent";
 import { Chip } from "../../components/ChipComponent";
 import { DatePickerField } from "../../components/DatePickerField";
@@ -27,6 +31,188 @@ import { onboardingConfig } from "./config";
 import { createStyleSheet } from "./style";
 
 const totalSteps = onboardingConfig.steps.length;
+type SelectionStepId = "gender" | "orientation" | "passions";
+type OnboardingOptionId = string | number;
+type OnboardingOptionItem = {
+  id: OnboardingOptionId;
+  label: string;
+};
+
+const selectionStepIds: SelectionStepId[] = [
+  "gender",
+  "orientation",
+  "passions",
+];
+
+const emptyRemoteOptions: Record<SelectionStepId, OnboardingOptionItem[]> = {
+  gender: [],
+  orientation: [],
+  passions: [],
+};
+
+const getFallbackOptions = (stepId: SelectionStepId) => {
+  const stepConfig = onboardingConfig.steps.find(
+    (configStep) => configStep.id === stepId,
+  );
+
+  if (
+    !stepConfig ||
+    (stepConfig.id !== "gender" &&
+      stepConfig.id !== "orientation" &&
+      stepConfig.id !== "passions")
+  ) {
+    return [];
+  }
+
+  return stepConfig.options.map((option, index) => ({
+    id: `fallback-${stepId}-${index}-${option}`,
+    label: option,
+  }));
+};
+
+const getNestedPayload = (payload: any) => {
+  return payload?.data?.data || payload?.data || payload?.options || payload;
+};
+
+const getListFromPayload = (payload: any, keys: string[]) => {
+  if (!payload || Array.isArray(payload)) {
+    return [];
+  }
+
+  for (const key of keys) {
+    if (Array.isArray(payload?.[key])) {
+      return payload[key];
+    }
+  }
+
+  return [];
+};
+
+const getOptionLabel = (option: any) => {
+  if (typeof option === "string" || typeof option === "number") {
+    return String(option).trim();
+  }
+
+  const labelValue =
+    option?.label ||
+    option?.name ||
+    option?.title ||
+    option?.value ||
+    option?.gender ||
+    option?.gender_name ||
+    option?.genderName ||
+    option?.orientation ||
+    option?.orientation_name ||
+    option?.orientationName ||
+    option?.passion ||
+    option?.passion_name ||
+    option?.passionName ||
+    option?.passions;
+
+  return typeof labelValue === "string" || typeof labelValue === "number"
+    ? String(labelValue).trim()
+    : "";
+};
+
+const getOptionId = (
+  option: any,
+  fallbackLabel: string,
+  index: number,
+  stepId: SelectionStepId,
+) => {
+  const idValue =
+    option?.id ??
+    option?.option_id ??
+    option?.value_id ??
+    option?.gender_id ??
+    option?.orientation_id ??
+    option?.passion_id;
+
+  return idValue !== undefined && idValue !== null
+    ? idValue
+    : `${stepId}-${index}-${fallbackLabel}`;
+};
+
+const normalizeOptionList = (list: any[], stepId: SelectionStepId) => {
+  return list
+    .map((option, index) => {
+      const label = getOptionLabel(option);
+
+      if (!label) {
+        return null;
+      }
+
+      return {
+        id: getOptionId(option, label, index, stepId),
+        label,
+      };
+    })
+    .filter(Boolean) as OnboardingOptionItem[];
+};
+
+const getGroupedOptionsFromArray = (
+  payload: any[],
+  stepId: SelectionStepId,
+) => {
+  return payload.filter((item) => {
+    const groupValue = String(
+      item?.type ||
+        item?.category ||
+        item?.group ||
+        item?.option_type ||
+        item?.optionType ||
+        "",
+    ).toLowerCase();
+
+    if (stepId === "passions") {
+      return groupValue.includes("passion");
+    }
+
+    return groupValue.includes(stepId);
+  });
+};
+
+const normalizeOnboardingOptions = (payload: any) => {
+  const nestedPayload = getNestedPayload(payload);
+  const optionKeys: Record<SelectionStepId, string[]> = {
+    gender: [
+      "genders",
+      "gender",
+      "genderOptions",
+      "gender_options",
+      "genderList",
+      "gender_list",
+    ],
+    orientation: [
+      "orientations",
+      "orientation",
+      "orientationOptions",
+      "orientation_options",
+      "orientationList",
+      "orientation_list",
+    ],
+    passions: [
+      "passions",
+      "passion",
+      "passionOptions",
+      "passion_options",
+      "passionList",
+      "passion_list",
+    ],
+  };
+
+  return selectionStepIds.reduce(
+    (acc, stepId) => {
+      const rawList = Array.isArray(nestedPayload)
+        ? getGroupedOptionsFromArray(nestedPayload, stepId)
+        : getListFromPayload(nestedPayload, optionKeys[stepId]);
+
+      acc[stepId] = normalizeOptionList(rawList, stepId);
+      return acc;
+    },
+    { ...emptyRemoteOptions },
+  );
+};
 
 export const Onboarding = () => {
   const styles = createStyleSheet();
@@ -36,19 +222,77 @@ export const Onboarding = () => {
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [submitError, setSubmitError] = useState("");
+  const [isOptionsLoading, setIsOptionsLoading] = useState(false);
+  const [optionsError, setOptionsError] = useState("");
+  const [remoteOptions, setRemoteOptions] =
+    useState<Record<SelectionStepId, OnboardingOptionItem[]>>(
+      emptyRemoteOptions,
+    );
   const [touched, setTouched] = useState({
     name: false,
+    bio: false,
     birthday: false,
     photos: false,
   });
   const [formData, setFormData] = useState({
     name: "",
+    bio: "",
     birthday: new Date(),
-    gender: "",
-    orientation: "",
-    passions: [] as string[],
+    gender: [] as OnboardingOptionId[],
+    orientation: [] as OnboardingOptionId[],
+    passions: [] as OnboardingOptionId[],
     photos: ["", "", "", ""] as string[],
   });
+  const selectionOptions = useMemo(
+    () =>
+      selectionStepIds.reduce(
+        (acc, stepId) => {
+          acc[stepId] =
+            remoteOptions[stepId].length > 0
+              ? remoteOptions[stepId]
+              : isOptionsLoading
+                ? []
+                : getFallbackOptions(stepId);
+          return acc;
+        },
+        { ...emptyRemoteOptions },
+      ),
+    [isOptionsLoading, remoteOptions],
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    setIsOptionsLoading(true);
+    setOptionsError("");
+
+    getOnboardingOptions()
+      .then((res) => {
+        if (!isMounted) {
+          return;
+        }
+
+        setRemoteOptions(normalizeOnboardingOptions(res?.data));
+      })
+      .catch((error) => {
+        console.error("Onboarding options fetch failed:", error);
+        if (!isMounted) {
+          return;
+        }
+
+        setOptionsError("Could not refresh options. Showing default choices.");
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsOptionsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const nextStep = () => {
     setDirection("forward");
     setStep((prev) => prev + 1);
@@ -66,12 +310,14 @@ export const Onboarding = () => {
     switch (currentStepConfig?.id) {
       case "name":
         return getNameValidationError(formData.name) === "";
+      case "bio":
+        return getBioValidationError(formData.bio) === "";
       case "birthday":
         return getBirthdayValidationError(formData.birthday) === "";
       case "gender":
-        return formData.gender !== "";
+        return formData.gender.length > 0;
       case "orientation":
-        return formData.orientation !== "";
+        return formData.orientation.length > 0;
       case "passions":
         return formData.passions.length > 0;
       case "photos":
@@ -84,6 +330,14 @@ export const Onboarding = () => {
   const getNameValidationError = (nameValue: string) => {
     if (!nameValue.trim()) {
       return onboardingConfig.validation.nameRequired;
+    }
+
+    return "";
+  };
+
+  const getBioValidationError = (bioValue: string) => {
+    if (!bioValue.trim()) {
+      return onboardingConfig.validation.bioRequired;
     }
 
     return "";
@@ -121,6 +375,7 @@ export const Onboarding = () => {
   };
 
   const nameError = touched.name ? getNameValidationError(formData.name) : "";
+  const bioError = touched.bio ? getBioValidationError(formData.bio) : "";
   const birthdayError = touched.birthday
     ? getBirthdayValidationError(formData.birthday)
     : "";
@@ -198,7 +453,9 @@ export const Onboarding = () => {
       );
       await useAddUserInfo({
         ...formData,
-        passions: formData.passions.join(","),
+        gender: formData.gender,
+        orientation: formData.orientation,
+        passions: formData.passions,
         profileImage: uploadedPhotos[0] || "",
         images: uploadedPhotos,
         photos: uploadedPhotos,
@@ -233,6 +490,10 @@ export const Onboarding = () => {
         setTouched((prev) => ({ ...prev, name: true }));
       }
 
+      if (currentStepConfig?.id === "bio") {
+        setTouched((prev) => ({ ...prev, bio: true }));
+      }
+
       if (currentStepConfig?.id === "birthday") {
         setTouched((prev) => ({ ...prev, birthday: true }));
       }
@@ -252,14 +513,14 @@ export const Onboarding = () => {
     handleSubmit();
   };
 
-  const togglePassion = (p: string) => {
+  const togglePassion = (passionId: OnboardingOptionId) => {
     setFormData((prev) => {
-      const exists = prev.passions.includes(p);
+      const exists = prev.passions.includes(passionId);
       return {
         ...prev,
         passions: exists
-          ? prev.passions.filter((item) => item !== p)
-          : [...prev.passions, p],
+          ? prev.passions.filter((item) => item !== passionId)
+          : [...prev.passions, passionId],
       };
     });
   };
@@ -270,30 +531,36 @@ export const Onboarding = () => {
     onSelect,
     multiple = false,
   }: {
-    options: string[];
-    selectedValue: string | string[];
-    onSelect: (selected: string) => void;
+    options: OnboardingOptionItem[];
+    selectedValue: OnboardingOptionId[];
+    onSelect: (selected: OnboardingOptionItem) => void;
     multiple?: boolean;
   }) => {
     return (
       <View style={styles.fieldBlock}>
+        {isOptionsLoading ? (
+          <Text style={styles.optionsHelperText}>Loading latest options...</Text>
+        ) : null}
+        {optionsError ? (
+          <Text style={styles.optionsErrorText}>{optionsError}</Text>
+        ) : null}
         <View style={styles.chipContainer}>
           {options.map((option) => {
             const isSelected = multiple
-              ? Array.isArray(selectedValue) && selectedValue.includes(option)
-              : selectedValue === option;
+              ? selectedValue.includes(option.id)
+              : selectedValue[0] === option.id;
 
             return (
               <Chip
-                key={option}
+                key={`${option.id}-${option.label}`}
                 chipStyle={
                   {
                     paddingVertical: 10,
                     paddingHorizontal: 20,
                   } as object
                 }
-                label={option}
-                onSelect={onSelect}
+                label={option.label}
+                onSelect={() => onSelect(option)}
                 selected={isSelected}
                 labelStyle={{
                   fontSize: 14,
@@ -325,6 +592,31 @@ export const Onboarding = () => {
             />
           </View>
         );
+      case "bio":
+        return (
+          <View style={styles.fieldBlock}>
+            <TextInputComponent
+              label={currentStepConfig.fieldLabel}
+              required={currentStepConfig.required}
+              placeholder={currentStepConfig.placeholder}
+              placeholderTextColor={hexToRgbA(defaultTheme.black, 40)}
+              value={formData.bio}
+              error={bioError}
+              textArea
+              multiline
+              numberOfLines={5}
+              maxLength={currentStepConfig.maxLength}
+              viewStyle={styles.bioInput}
+              onChangeText={(value) =>
+                setFormData((prev) => ({ ...prev, bio: value }))
+              }
+              onBlur={() => setTouched((prev) => ({ ...prev, bio: true }))}
+            />
+            <Text style={styles.characterCount}>
+              {formData.bio.length}/{currentStepConfig.maxLength}
+            </Text>
+          </View>
+        );
       case "birthday":
         return (
           <View style={styles.fieldBlock}>
@@ -345,7 +637,7 @@ export const Onboarding = () => {
       case "orientation":
       case "passions":
         return renderSelectionChips({
-          options: currentStepConfig.options,
+          options: selectionOptions[currentStepConfig.id],
           selectedValue:
             currentStepConfig.id === "gender"
               ? formData.gender
@@ -354,16 +646,19 @@ export const Onboarding = () => {
                 : formData.passions,
           onSelect: (selected) => {
             if (currentStepConfig.id === "gender") {
-              setFormData((prev) => ({ ...prev, gender: selected }));
+              setFormData((prev) => ({ ...prev, gender: [selected.id] }));
               return;
             }
 
             if (currentStepConfig.id === "orientation") {
-              setFormData((prev) => ({ ...prev, orientation: selected }));
+              setFormData((prev) => ({
+                ...prev,
+                orientation: [selected.id],
+              }));
               return;
             }
 
-            togglePassion(selected);
+            togglePassion(selected.id);
           },
           multiple: currentStepConfig.selectionMode === "multiple",
         });

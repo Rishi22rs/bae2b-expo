@@ -11,6 +11,10 @@ export const useAddUserInfo = (payload: object) => {
   return apiClient.post(`/add-user-info`, payload);
 };
 
+export const getOnboardingOptions = () => {
+  return apiClient.get(`/get-onboarding-options`);
+};
+
 export const compressImageForUpload = async (uri: string) => {
   const compressedImage = await manipulateAsync(
     uri,

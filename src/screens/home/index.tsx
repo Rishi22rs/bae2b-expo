@@ -1,57 +1,163 @@
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Image, Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import Animated, {
   FadeIn,
   FadeOut,
   SlideInDown,
+  SlideInUp,
   SlideOutDown,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
 } from "react-native-reanimated";
-import DotsIcon from "react-native-vector-icons/Entypo";
 import Icon from "react-native-vector-icons/Ionicons";
 import {
   useAddLikeDislike,
   useGetNearbyUsers,
   useUpdateUserLocation,
 } from "../../api/match";
+import {
+  BottomSheetComponent,
+  BottomSheetHandle,
+} from "../../components/BottomSheetComponent";
 import { ButtonComponent } from "../../components/ButtonComponent";
 import { Header } from "../../components/Header";
 import Loader from "../../components/Loader";
-import { ModalComponent } from "../../components/ModalComponent";
 import { navigationConstants } from "../../constants/app-navigation";
-import { screenHeight, screenWidth } from "../../utils/dimensions";
 import { hexToRgbA } from "../../utils/hexToRgba";
 import { requestLocationPermission } from "../../utils/requestLocationPermission";
-import { BigText } from "./components/BigText";
-import { LineItems } from "./components/LineItems";
-import { SmallText } from "./components/SmallText";
 import { createStyleSheet } from "./style";
 
-export const Home = ({ route }) => {
+type ProfileSection = {
+  type: "BIG_TEXT" | "SMALL_TEXT" | "SMALL_TEXT_LIST";
+  title?: string;
+  content?: string | Array<{ value?: string } | string>;
+};
+
+type NearbyUser = {
+  id?: string;
+  userId?: string;
+  name?: string;
+  bio?: string;
+  age?: number;
+  location?: string;
+  imageUrl?: string;
+  profileImage?: string;
+  profile_image?: string;
+  images?: string[];
+  photos?: string[];
+  segregatedList?: ProfileSection[];
+};
+
+type Coords = {
+  latitude: number;
+  longitude: number;
+};
+
+const FALLBACK_IMAGE =
+  "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e";
+const MIN_HERO_HEIGHT = 320;
+
+const getStringContent = (content: ProfileSection["content"]) => {
+  return typeof content === "string" ? content : "";
+};
+
+const getListItems = (content: ProfileSection["content"]) => {
+  if (!Array.isArray(content)) {
+    return [];
+  }
+
+  return content
+    .map((item) => {
+      if (typeof item === "string") {
+        return item.trim();
+      }
+
+      return item?.value?.trim() || "";
+    })
+    .filter(Boolean);
+};
+
+const getUserImages = (user?: NearbyUser) => {
+  const imageCandidates = [
+    ...(Array.isArray(user?.images) ? user.images : []),
+    ...(Array.isArray(user?.photos) ? user.photos : []),
+    user?.profileImage,
+    user?.profile_image,
+    user?.imageUrl,
+  ];
+
+  return imageCandidates.filter(
+    (imageUri, index, self) =>
+      typeof imageUri === "string" &&
+      imageUri.trim().length > 0 &&
+      self.indexOf(imageUri) === index,
+  ) as string[];
+};
+
+export const Home = () => {
   const styles = createStyleSheet();
+  const navigation = useNavigation();
+  const tabBarHeight = useBottomTabBarHeight();
+  const { height: windowHeight } = useWindowDimensions();
+  const swipeLimitSheetRef = useRef<BottomSheetHandle>(null);
+
   const [locationGranted, setLocationGranted] = useState(false);
-  const [nearbyUsers, setNearbyUsers] = useState([]);
+  const [nearbyUsers, setNearbyUsers] = useState<NearbyUser[]>([]);
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
-  const [coords, setCoords] = useState();
-  const [isDetailShown, setIsDetailShown] = useState(false);
-  const [showLikeUnlikeView, setShowLikeUnlikeView] = useState(0);
-  const navigation = useNavigation();
+  const [coords, setCoords] = useState<Coords | undefined>();
   const [showLoader, setShowLoader] = useState(true);
+  const [reactionPreview, setReactionPreview] = useState<0 | -1 | 1>(0);
+  const [swipeLimitMessage, setSwipeLimitMessage] = useState(
+    "You are out of swipes for now. Come back a little later.",
+  );
+
   const isInsecureWebContext =
     Platform.OS === "web" &&
     typeof window !== "undefined" &&
     !window.isSecureContext;
 
-  const cardHeight = {
-    detailsNotShownHeight: screenHeight - 170,
-    detailsShowHeight: screenHeight / 2,
-  };
+  const currentUser = nearbyUsers[currentUserIndex];
+  const currentUserImages = useMemo(
+    () => getUserImages(currentUser),
+    [currentUser],
+  );
+  const activeImageUri =
+    currentUserImages[currentPhotoIndex] ||
+    currentUserImages[0] ||
+    FALLBACK_IMAGE;
+
+  const headlineSection = currentUser?.segregatedList?.find(
+    (section) => section?.type === "BIG_TEXT",
+  );
+  const headline =
+    getStringContent(headlineSection?.content) ||
+    `${currentUser?.name || "Someone new"}${
+      currentUser?.age ? `, ${currentUser.age}` : ""
+    }`;
+  const sectionsToRender =
+    currentUser?.segregatedList?.filter(
+      (section) =>
+        section?.type !== "BIG_TEXT" &&
+        (getStringContent(section?.content).trim().length > 0 ||
+          getListItems(section?.content).length > 0),
+    ) || [];
+  const currentUserBio =
+    typeof currentUser?.bio === "string" ? currentUser.bio.trim() : "";
+
+  const bottomTabSpace = Math.max(tabBarHeight - 30, 34);
+  const stickyActionBottom = bottomTabSpace;
+  const heroHeight = Math.max(MIN_HERO_HEIGHT, Math.round(windowHeight * 0.67));
+  const profileBottomPadding = stickyActionBottom + 96;
 
   const getNearyByUsers = () => {
     if (!coords) {
@@ -60,12 +166,13 @@ export const Home = ({ route }) => {
 
     setShowLoader(true);
     useGetNearbyUsers({
-      latitude: coords?.latitude,
-      longitude: coords?.longitude,
+      latitude: coords.latitude,
+      longitude: coords.longitude,
       radius: 1000000,
     })
       .then((res) => {
-        setNearbyUsers(res?.data || []);
+        setNearbyUsers(Array.isArray(res?.data) ? res.data : []);
+        setCurrentUserIndex(0);
       })
       .catch((error) => {
         console.error("Nearby users fetch error:", error);
@@ -96,7 +203,9 @@ export const Home = ({ route }) => {
   useEffect(() => {
     const initializePermission = async () => {
       try {
-        const existingPermission = await Location.getForegroundPermissionsAsync();
+        const existingPermission =
+          await Location.getForegroundPermissionsAsync();
+
         if (existingPermission.status === "granted") {
           setLocationGranted(true);
           return;
@@ -122,6 +231,7 @@ export const Home = ({ route }) => {
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
+
       const updateLocation = async () => {
         if (!locationGranted) {
           setShowLoader(false);
@@ -133,13 +243,14 @@ export const Home = ({ route }) => {
           const position = await Location.getCurrentPositionAsync({
             accuracy: Location.Accuracy.Highest,
           });
+
           if (!isActive) {
             return;
           }
 
           const currentCoords = {
-            latitude: position?.coords?.latitude,
-            longitude: position?.coords?.longitude,
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
           };
 
           setCoords(currentCoords);
@@ -160,82 +271,6 @@ export const Home = ({ route }) => {
     }, [locationGranted]),
   );
 
-  const handleLikeDislike = (payload?: object) => {
-    console.log("payload", payload);
-    useAddLikeDislike(payload)
-      .then((res) => {
-        if (res?.data?.matched) {
-          navigation.replace(navigationConstants.MATCH_ROUTE, {
-            screen: navigationConstants.ITS_A_MATCH,
-            params: {},
-          });
-        } else {
-          setTimeout(() => {
-            setCurrentUserIndex((prev) => prev + 1);
-          }, 200);
-        }
-      })
-      .catch((error) => console.log("error", error.response));
-  };
-
-  const getCurrentSection = (user: unknown) => {
-    switch (user?.type) {
-      case "BIG_TEXT":
-        return <BigText title={user?.title} content={user?.content} />;
-      case "SMALL_TEXT":
-        return <SmallText title={user?.title} content={user?.content} />;
-      case "SMALL_TEXT_LIST":
-        return <LineItems title={user?.title} content={user?.content} />;
-    }
-  };
-
-  const imageHeight = useSharedValue(screenHeight - 170);
-  const currentUser = nearbyUsers?.[currentUserIndex];
-  const currentUserImages = useMemo(() => {
-    const imageCandidates = [
-      ...(Array.isArray(currentUser?.images) ? currentUser.images : []),
-      ...(Array.isArray(currentUser?.photos) ? currentUser.photos : []),
-      currentUser?.profileImage,
-      currentUser?.profile_image,
-      currentUser?.imageUrl,
-    ];
-
-    return imageCandidates.filter(
-      (imageUri, index, self) =>
-        typeof imageUri === "string" &&
-        imageUri.trim().length > 0 &&
-        self.indexOf(imageUri) === index,
-    );
-  }, [currentUser]);
-  const activeImageUri =
-    currentUserImages[currentPhotoIndex] ||
-    "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e";
-
-  const animatedImageStyle = useAnimatedStyle(() => {
-    return {
-      height: imageHeight.value,
-    };
-  });
-
-  const handleLikeUnlikeView = (like: -1 | 1 = -1) => {
-    // setTimeout(() => {
-    setShowLikeUnlikeView(like);
-    handleLikeDislike({
-      other_user_id: nearbyUsers?.[currentUserIndex]?.userId,
-      is_like: like === 1 ? 1 : 0,
-    });
-    setTimeout(() => {
-      setShowLikeUnlikeView(0);
-    }, 1000);
-    // }, 500);
-    handlebackPress();
-  };
-
-  const handlebackPress = () => {
-    imageHeight.value = withSpring(cardHeight.detailsNotShownHeight);
-    setIsDetailShown(false);
-  };
-
   const showPreviousPhoto = () => {
     setCurrentPhotoIndex((prev) => (prev > 0 ? prev - 1 : prev));
   };
@@ -246,205 +281,291 @@ export const Home = ({ route }) => {
     );
   };
 
-  const renderCard = () => {
-    const CardComponent = isDetailShown ? ScrollView : View;
-    return (
-      <CardComponent
-        style={!isDetailShown ? styles.container : {}}
-        contentContainerStyle={styles.container}
-      >
-        <Animated.View style={styles.imageContainer}>
-          <Pressable>
-            <Animated.Image
-              source={{
-                uri: activeImageUri,
-              }}
-              style={[styles.profileImage, animatedImageStyle]}
-            />
-            {currentUserImages.length > 1 ? (
-              <View style={styles.imageProgressRow}>
-                {currentUserImages.map((imageUri, index) => (
-                  <View
-                    key={`${imageUri}-${index}`}
-                    style={[
-                      styles.imageProgressBar,
-                      index === currentPhotoIndex
-                        ? styles.imageProgressBarActive
-                        : null,
-                    ]}
-                  />
-                ))}
+  const openSwipeLimitSheet = (message?: string) => {
+    setSwipeLimitMessage(
+      message || "You are out of swipes for now. Come back a little later.",
+    );
+    swipeLimitSheetRef.current?.open();
+  };
+
+  const handleReaction = (like: -1 | 1) => {
+    if (!currentUser) {
+      return;
+    }
+
+    setReactionPreview(like);
+    setTimeout(() => setReactionPreview(0), 700);
+
+    useAddLikeDislike({
+      other_user_id: currentUser.userId || currentUser.id,
+      is_like: like === 1 ? 1 : 0,
+    })
+      .then((res) => {
+        if (res?.data?.matched) {
+          (navigation as any).replace(navigationConstants.MATCH_ROUTE, {
+            screen: navigationConstants.ITS_A_MATCH,
+            params: {
+              secondImageUrl: activeImageUri,
+            },
+          });
+          return;
+        }
+
+        setTimeout(() => {
+          setCurrentUserIndex((prev) => prev + 1);
+        }, 180);
+      })
+      .catch((error) => {
+        const statusCode = error?.response?.status;
+        const message =
+          error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          error?.message ||
+          "";
+
+        if (
+          statusCode === 402 ||
+          statusCode === 403 ||
+          statusCode === 429 ||
+          /no\s*likes\s*left|no\s*swipes\s*left|out\s*of\s*swipes|limit/i.test(
+            message,
+          )
+        ) {
+          openSwipeLimitSheet(message);
+          return;
+        }
+
+        console.error("Like/dislike error:", error?.response || error);
+      });
+  };
+
+  const renderSection = (section: ProfileSection, index: number) => {
+    const title = section?.title || "About";
+
+    if (section?.type === "SMALL_TEXT_LIST") {
+      const items = getListItems(section.content);
+
+      return (
+        <Animated.View
+          key={`${title}-${index}`}
+          entering={FadeIn.delay(index * 70).duration(280)}
+          style={styles.promptCard}
+        >
+          <Text style={styles.promptLabel}>{title}</Text>
+          <View style={styles.chipRow}>
+            {items.map((item) => (
+              <View key={item} style={styles.chip}>
+                <Text style={styles.chipText}>{item}</Text>
               </View>
-            ) : null}
-            <View style={styles.imageTapOverlay}>
-              <Pressable
-                onPress={showPreviousPhoto}
-                style={styles.imageTapZone}
-              />
-              <Pressable onPress={showNextPhoto} style={styles.imageTapZone} />
-            </View>
-            {!isDetailShown ? (
-              <View>
-                <LinearGradient
-                  colors={[
-                    hexToRgbA("#000000", 90),
-                    hexToRgbA("#000000", 80),
-                    hexToRgbA("#000000", 50),
-                    "transparent",
-                  ]}
-                  start={{ x: 0, y: 1 }}
-                  end={{ x: 0, y: 0 }}
-                  style={styles.userDetailImageTop}
-                >
-                    <Text style={styles.userDetailImageTopText}>
-                      {
-                        nearbyUsers?.[currentUserIndex]?.segregatedList?.[0]
-                          ?.content
-                      }
-                    </Text>
-                  <Pressable
-                    onPress={() => {
-                      if (!isDetailShown) {
-                        imageHeight.value = withSpring(
-                          cardHeight.detailsShowHeight,
-                        );
-                        setIsDetailShown(true);
-                      }
-                    }}
-                  >
-                    <DotsIcon
-                      name="dots-three-vertical"
-                      size={24}
-                      color="#ffffff"
-                    />
-                  </Pressable>
-                </LinearGradient>
-              </View>
-            ) : null}
-          </Pressable>
-          {isDetailShown ? (
-            <Pressable onPress={handlebackPress} style={styles.backBtn}>
-              <Icon name="chevron-back" size={24} color="#000" />
-            </Pressable>
-          ) : null}
+            ))}
+          </View>
         </Animated.View>
-        {/* Buttons below image */}
-        <View style={styles.actionButtons}>
-          <Pressable
-            style={styles.circleButtonBig}
-            onPress={() => handleLikeUnlikeView(-1)}
-          >
-            <Icon name="close" size={24} color="#ff3b30" />
-          </Pressable>
-          <Pressable
-            style={styles.circleButtonBig}
-            onPress={() => handleLikeUnlikeView(1)}
-          >
-            <Icon name="heart" size={28} color="#ff2d55" />
-          </Pressable>
+      );
+    }
+
+    return (
+      <Animated.View
+        key={`${title}-${index}`}
+        entering={FadeIn.delay(index * 70).duration(280)}
+        style={styles.promptCard}
+      >
+        <Text style={styles.promptLabel}>{title}</Text>
+        <Text style={styles.promptText}>
+          {getStringContent(section.content)}
+        </Text>
+      </Animated.View>
+    );
+  };
+
+  const renderBio = () => {
+    if (!currentUserBio) {
+      return null;
+    }
+
+    return (
+      <Animated.View entering={FadeIn.delay(80).duration(280)} style={styles.bioCard}>
+        <View style={styles.bioIconBubble}>
+          <Icon name="chatbubble-ellipses-outline" size={18} color="#111111" />
+        </View>
+        <View style={styles.bioContent}>
+          <Text style={styles.bioLabel}>Bio</Text>
+          <Text style={styles.bioText}>{currentUserBio}</Text>
+        </View>
+      </Animated.View>
+    );
+  };
+
+  const renderHero = () => {
+    return (
+      <Animated.View entering={FadeIn.duration(260)} style={styles.heroCard}>
+        <Animated.Image
+          source={{ uri: activeImageUri }}
+          style={[styles.heroImage, { height: heroHeight }]}
+        />
+
+        {currentUserImages.length > 1 ? (
+          <View style={styles.imageProgressRow}>
+            {currentUserImages.map((imageUri, index) => (
+              <View
+                key={`${imageUri}-${index}`}
+                style={[
+                  styles.imageProgressBar,
+                  index === currentPhotoIndex
+                    ? styles.imageProgressBarActive
+                    : null,
+                ]}
+              />
+            ))}
+          </View>
+        ) : null}
+
+        <View style={styles.imageTapOverlay}>
+          <Pressable onPress={showPreviousPhoto} style={styles.imageTapZone} />
+          <Pressable onPress={showNextPhoto} style={styles.imageTapZone} />
         </View>
 
-        {/* Profile Info */}
-        <View style={styles.profileInfo}>
-          {nearbyUsers?.[currentUserIndex]?.segregatedList?.length ? (
-            nearbyUsers?.[currentUserIndex]?.segregatedList?.map((user, index) => {
-              return (
-                <View key={`${user?.type}-${user?.title}-${index}`}>
-                  {getCurrentSection(user)}
-                </View>
-              );
-            })
-          ) : (
-            <View style={styles.emptyCard}>
-              <Text style={styles.sectionTitle}>Profile</Text>
-              <Text style={styles.aboutText}>
-                This user has not added profile details yet.
-              </Text>
-            </View>
-          )}
-        </View>
-      </CardComponent>
+        <LinearGradient
+          colors={[
+            hexToRgbA("#000000", 90),
+            hexToRgbA("#000000", 72),
+            hexToRgbA("#000000", 30),
+            "transparent",
+          ]}
+          start={{ x: 0, y: 1 }}
+          end={{ x: 0, y: 0 }}
+          style={styles.heroOverlay}
+          pointerEvents="box-none"
+        >
+          <View style={styles.heroTextBlock}>
+            <Text style={styles.heroName}>{headline}</Text>
+            {currentUser?.location ? (
+              <Text style={styles.heroMeta}>{currentUser.location}</Text>
+            ) : null}
+          </View>
+        </LinearGradient>
+      </Animated.View>
     );
   };
 
   const renderNoUserNearby = () => {
     return (
-      <View>
-        <Image
-          source={require("../../assets/noUsers.png")}
-          style={{
-            height: 500,
-            width: screenWidth,
-          }}
-        />
-        <Text
-          style={{
-            paddingHorizontal: 30,
-            fontWeight: "500",
-            fontSize: 30,
-            color: "#f96163",
-            textAlign: "center",
-          }}
-        >
-          You're ahead of the crowd! We'll let you know when someone new pops
-          up.
+      <View style={[styles.noNearbyScreen, { minHeight: windowHeight - 140 }]}>
+        <View style={styles.noNearbyBadge}>
+          <Icon name="sparkles-outline" size={24} color="#111111" />
+        </View>
+        <Text style={styles.noNearbyText}>No one new around you yet.</Text>
+      </View>
+    );
+  };
+
+  const renderPermissionView = () => {
+    return (
+      <View style={styles.permissionScreen}>
+        <Icon name="navigate-outline" size={26} color="#111111" />
+        <Text style={styles.permissionTitle}>Turn on location.</Text>
+        <Text style={styles.permissionText}>
+          We need your location to show people near you.
         </Text>
+        {isInsecureWebContext ? (
+          <Text style={styles.permissionHint}>
+            On mobile web, location permission works only on HTTPS or localhost.
+          </Text>
+        ) : null}
+        <ButtonComponent
+          buttonText="Allow permission"
+          onPress={askLocationPermission}
+          viewStyle={styles.permissionButton}
+        />
       </View>
     );
   };
 
   return (
-    <View style={{ backgroundColor: "white", flex: 1 }}>
+    <View style={styles.screen}>
       <Loader visible={showLoader} />
-      {/* {like or unlike view} */}
-      {showLikeUnlikeView !== 0 && (
+
+      {reactionPreview !== 0 ? (
         <Animated.View
-          style={[styles.fullscreenOverlay, styles.likeUnlikeView]}
-          key={`likeUnlike-${showLikeUnlikeView}`}
-          entering={FadeIn.duration(1000)}
-          exiting={FadeOut.duration(2000)}
-          pointerEvents="none" // ensures it doesn't block user interactions
+          key={`reaction-${reactionPreview}`}
+          style={styles.fullscreenOverlay}
+          entering={FadeIn.duration(120)}
+          exiting={FadeOut.duration(260)}
+          pointerEvents="none"
         >
-          <View>
-            {showLikeUnlikeView === -1 ? (
-              <Icon name="close" size={240} color="#ff3b30" />
-            ) : (
-              <Icon name="heart" size={240} color="#ff2d55" />
-            )}
-          </View>
-        </Animated.View>
-      )}
-      <Header />
-      {locationGranted ? (
-        <Animated.View
-          key={`card-${currentUserIndex}`}
-          entering={SlideInDown.duration(1000)}
-          exiting={SlideOutDown.duration(500)}
-        >
-          {nearbyUsers?.length !== currentUserIndex
-            ? renderCard()
-            : renderNoUserNearby()}
-        </Animated.View>
-      ) : (
-        <View style={styles.background}>
-          <Text style={styles.nameText}>
-            We need your location to serve users near you.
-          </Text>
-          {isInsecureWebContext && (
-            <Text style={[styles.nameText, { fontSize: 14, marginTop: 8 }]}>
-              On mobile web, location permission works only on HTTPS (or localhost).
-              Open this site over HTTPS, then tap Allow permission.
-            </Text>
-          )}
-          <ButtonComponent
-            buttonText="Allow permission"
-            onPress={askLocationPermission}
+          <Icon
+            name={reactionPreview === 1 ? "heart" : "close"}
+            size={128}
+            color={reactionPreview === 1 ? "#ff2d55" : "#ff3b30"}
           />
-        </View>
+        </Animated.View>
+      ) : null}
+
+      <Header />
+
+      {!locationGranted ? (
+        renderPermissionView()
+      ) : currentUser ? (
+        <>
+          <Animated.View
+            key={`home-profile-${currentUserIndex}`}
+            style={styles.profileShell}
+            entering={SlideInUp.duration(320)}
+            exiting={SlideOutDown.duration(220)}
+          >
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={[
+                styles.profileContent,
+                { paddingBottom: profileBottomPadding },
+              ]}
+            >
+              {renderHero()}
+              {renderBio()}
+
+              {sectionsToRender.length > 0 ? (
+                sectionsToRender.map(renderSection)
+              ) : !currentUserBio ? (
+                <Animated.View
+                  entering={FadeIn.duration(280)}
+                  style={styles.promptCard}
+                >
+                  <Text style={styles.promptLabel}>Profile</Text>
+                  <Text style={styles.promptText}>
+                    This person has not added more details yet.
+                  </Text>
+                </Animated.View>
+              ) : null}
+            </ScrollView>
+          </Animated.View>
+
+          <Animated.View
+            entering={SlideInDown.duration(260)}
+            style={[styles.stickyActions, { bottom: stickyActionBottom }]}
+          >
+            <Pressable
+              style={styles.actionButton}
+              onPress={() => handleReaction(-1)}
+            >
+              <Icon name="close" size={28} color="#111111" />
+            </Pressable>
+            <Pressable
+              style={[styles.actionButton, styles.likeButton]}
+              onPress={() => handleReaction(1)}
+            >
+              <Icon name="heart" size={30} color="#111111" />
+            </Pressable>
+          </Animated.View>
+        </>
+      ) : (
+        renderNoUserNearby()
       )}
-      <ModalComponent>
-        <Text>No likes left</Text>
-      </ModalComponent>
+
+      <BottomSheetComponent
+        ref={swipeLimitSheetRef}
+        title="No swipes left"
+        subtitle={swipeLimitMessage}
+        primaryLabel="Okay"
+      />
     </View>
   );
 };

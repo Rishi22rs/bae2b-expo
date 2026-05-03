@@ -1,40 +1,35 @@
-import {CommonActions, useNavigation} from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {StatusBar} from 'expo-status-bar';
-import {useEffect, useMemo, useState} from 'react';
-import {
-  Platform,
-  Pressable,
-  SafeAreaView,
-  Text,
-} from 'react-native';
-import {OtpInput} from 'react-native-otp-entry';
-import Icon from 'react-native-vector-icons/Ionicons';
-import {useLogin, useOtp} from '../../api/auth';
-import {KeyboardScreenLayout} from '../../components/KeyboardScreenLayout';
-import {TextComponent} from '../../components/TextComponent';
-import {navigationConstants} from '../../constants/app-navigation';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { CommonActions, useNavigation } from "@react-navigation/native";
+import { StatusBar } from "expo-status-bar";
+import { useEffect, useMemo, useState } from "react";
+import { Platform, Pressable, SafeAreaView, Text } from "react-native";
+import { OtpInput } from "react-native-otp-entry";
+import Icon from "react-native-vector-icons/Ionicons";
+import { useLogin, useOtp } from "../../api/auth";
+import { KeyboardScreenLayout } from "../../components/KeyboardScreenLayout";
+import { TextComponent } from "../../components/TextComponent";
+import { navigationConstants } from "../../constants/app-navigation";
+import { goBackWithWebFallback } from "../../utils/navigation-back";
 import {
   getApiErrorMessage,
   getMessageFromPayload,
   getOtpAttemptsLeft,
   getOtpExpirySeconds,
-} from '../../utils/otp';
-import {goBackWithWebFallback} from '../../utils/navigation-back';
-import {createStyleSheet} from './style';
+} from "../../utils/otp";
+import { createStyleSheet } from "./style";
 
-export const OtpScreen = ({route}: {route: any}) => {
+export const OtpScreen = ({ route }: { route: any }) => {
   const style = createStyleSheet();
   const navigation = useNavigation();
-  const phoneNumber = route?.params?.phoneNumber || '';
+  const phoneNumber = route?.params?.phoneNumber || "";
   const otpMeta = route?.params?.otpMeta || route?.params || {};
 
-  const [otp, setOtp] = useState('');
+  const [otp, setOtp] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState("");
   const [infoMessage, setInfoMessage] = useState(
-    route?.params?.requestMessage || getMessageFromPayload(otpMeta, ''),
+    route?.params?.requestMessage || getMessageFromPayload(otpMeta, ""),
   );
   const [attemptsLeft, setAttemptsLeft] = useState<number | undefined>(() =>
     getOtpAttemptsLeft(otpMeta),
@@ -49,7 +44,7 @@ export const OtpScreen = ({route}: {route: any}) => {
     }
 
     const timer = setInterval(() => {
-      setSecondsLeft(prev => (prev <= 1 ? 0 : prev - 1));
+      setSecondsLeft((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
 
     return () => clearInterval(timer);
@@ -60,28 +55,28 @@ export const OtpScreen = ({route}: {route: any}) => {
   const canVerifyOtp = otp.length === 4 && !isVerifying && hasAttemptsRemaining;
   const resendLabel = canResendOtp
     ? isResending
-      ? 'Resending code...'
-      : 'Resend code'
+      ? "Resending code..."
+      : "Resend code"
     : `Resend code in ${secondsLeft}s`;
   const maskedPhone = useMemo(
-    () => (phoneNumber ? `+91 - ${phoneNumber}` : '+91 - your number'),
+    () => (phoneNumber ? `+91 - ${phoneNumber}` : "+91 - your number"),
     [phoneNumber],
   );
 
   const handleAuth = (res: any) => {
-    AsyncStorage.setItem('jwt-token', res?.data?.token).then(() => {
+    AsyncStorage.setItem("jwt-token", res?.data?.token).then(() => {
       const rootResetAction = CommonActions.reset({
         index: 0,
-        routes: [{name: navigationConstants.STEPPER_SCREEN}],
+        routes: [{ name: navigationConstants.STEPPER_SCREEN }],
       });
 
       (navigation as any).dispatch(rootResetAction);
 
       // On web, ensure the OTP entry is replaced so browser-back won't return here.
-      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      if (Platform.OS === "web" && typeof window !== "undefined") {
         window.history.replaceState(
           window.history.state,
-          '',
+          "",
           `/${navigationConstants.STEPPER_SCREEN}`,
         );
       }
@@ -94,20 +89,23 @@ export const OtpScreen = ({route}: {route: any}) => {
     }
 
     setIsResending(true);
-    setErrorMessage('');
+    setErrorMessage("");
 
     try {
-      const resendResponse = await useLogin({phone_number: phoneNumber});
+      const resendResponse = await useLogin({ phone_number: phoneNumber });
       const responseData = resendResponse?.data || {};
-      setInfoMessage(getMessageFromPayload(responseData, 'OTP resent successfully.'));
-      setOtp('');
+      setInfoMessage(
+        getMessageFromPayload(responseData, "OTP resent successfully."),
+      );
+      setOtp("");
       setSecondsLeft(getOtpExpirySeconds(responseData, 30));
       setAttemptsLeft(getOtpAttemptsLeft(responseData));
     } catch (error) {
-      const errorData = (error as {response?: {data?: unknown}})?.response?.data;
-      setInfoMessage('');
+      const errorData = (error as { response?: { data?: unknown } })?.response
+        ?.data;
+      setInfoMessage("");
       setErrorMessage(
-        getApiErrorMessage(error, 'Unable to resend OTP. Please try again.'),
+        getApiErrorMessage(error, "Unable to resend OTP. Please try again."),
       );
 
       const nextAttempts = getOtpAttemptsLeft(errorData);
@@ -126,28 +124,34 @@ export const OtpScreen = ({route}: {route: any}) => {
 
   const handleOtpVerify = async () => {
     if (!phoneNumber) {
-      setErrorMessage('Phone number not found. Please request OTP again.');
+      setErrorMessage("Phone number not found. Please request OTP again.");
       return;
     }
 
     if (!otp || otp.length < 4) {
-      setErrorMessage('Please enter the 4-digit OTP.');
+      setErrorMessage("Please enter the 4-digit OTP.");
       return;
     }
 
     setIsVerifying(true);
-    setErrorMessage('');
+    setErrorMessage("");
 
     try {
-      const verifyResponse = await useOtp({phoneNumber, otp});
+      const verifyResponse = await useOtp({ phoneNumber, otp });
       setInfoMessage(
-        getMessageFromPayload(verifyResponse?.data, 'OTP verified successfully.'),
+        getMessageFromPayload(
+          verifyResponse?.data,
+          "OTP verified successfully.",
+        ),
       );
       handleAuth(verifyResponse);
     } catch (error) {
-      const errorData = (error as {response?: {data?: unknown}})?.response?.data;
-      setInfoMessage('');
-      setErrorMessage(getApiErrorMessage(error, 'Invalid OTP. Please try again.'));
+      const errorData = (error as { response?: { data?: unknown } })?.response
+        ?.data;
+      setInfoMessage("");
+      setErrorMessage(
+        getApiErrorMessage(error, "Invalid OTP. Please try again."),
+      );
 
       const nextAttempts = getOtpAttemptsLeft(errorData);
       if (nextAttempts !== undefined) {
@@ -177,7 +181,8 @@ export const OtpScreen = ({route}: {route: any}) => {
             style={[
               style.authPrimaryButton,
               !canVerifyOtp ? style.authPrimaryButtonDisabled : null,
-            ]}>
+            ]}
+          >
             <TextComponent
               viewStyle={
                 canVerifyOtp
@@ -186,14 +191,18 @@ export const OtpScreen = ({route}: {route: any}) => {
                       ...style.authPrimaryButtonText,
                       ...style.authPrimaryButtonTextDisabled,
                     }
-              }>
-              {isVerifying ? 'Verifying OTP...' : 'Verify OTP'}
+              }
+            >
+              {isVerifying ? "Verifying OTP..." : "Verify OTP"}
             </TextComponent>
           </Pressable>
-        }>
+        }
+      >
         <Icon name="phone-portrait-outline" size={26} color="#111111" />
 
-        <TextComponent viewStyle={style.authTitle}>Enter the code</TextComponent>
+        <TextComponent viewStyle={style.authTitle}>
+          Enter the code
+        </TextComponent>
 
         <Text style={style.authSubtitleLine}>
           <Text style={style.authSubtitleText}>Code sent to </Text>
@@ -205,7 +214,8 @@ export const OtpScreen = ({route}: {route: any}) => {
               goBackWithWebFallback(navigation as any, {
                 screen: navigationConstants.LOGIN_PAGE,
               })
-            }>
+            }
+          >
             Edit
           </Text>
         </Text>
@@ -227,7 +237,8 @@ export const OtpScreen = ({route}: {route: any}) => {
         <Pressable
           disabled={!canResendOtp}
           onPress={handleResendOtp}
-          style={style.resendButton}>
+          style={style.resendButton}
+        >
           <TextComponent
             viewStyle={
               canResendOtp
@@ -236,16 +247,21 @@ export const OtpScreen = ({route}: {route: any}) => {
                     ...style.resendText,
                     ...style.resendTextDisabled,
                   }
-            }>
+            }
+          >
             {resendLabel}
           </TextComponent>
         </Pressable>
 
         {!!errorMessage ? (
-          <TextComponent viewStyle={style.authErrorText}>{errorMessage}</TextComponent>
+          <TextComponent viewStyle={style.authErrorText}>
+            {errorMessage}
+          </TextComponent>
         ) : null}
         {!!infoMessage ? (
-          <TextComponent viewStyle={style.authInfoText}>{infoMessage}</TextComponent>
+          <TextComponent viewStyle={style.authInfoText}>
+            {infoMessage}
+          </TextComponent>
         ) : null}
       </KeyboardScreenLayout>
     </SafeAreaView>
